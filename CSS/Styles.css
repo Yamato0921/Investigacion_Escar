@@ -1,0 +1,26 @@
+  .bg-custom-blue {
+            background-color: #004b87;
+         }
+        .hero-section {
+            background-image: url('../Src/Images/Bg/Image-Bg-1.jpg');
+            background-size: cover;
+            background-position: center;
+            color: black;
+            padding: 100px 0;
+            height: 400px;
+        }
+
+
+        .question-section {
+            background-color: #f8f9fa;
+            padding: 50px 0;
+        }
+
+        .question-section div {
+            margin-bottom: 30px;
+        }
+
+
+
+
+
