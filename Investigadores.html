@@ -5,7 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investigadores - Escuela Nacional de Carabineros</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://c                // Login
+                document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formAlert = document.getElementById('loginAlert');
+                    try {
+                        const username = document.getElementById('loginUsername').value;
+                        const password = document.getElementById('loginPassword').value;
+                        
+                        const response = await fetch(`${API_URL}?action=login`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ username, password }),
+                            credentials: 'include' // Importante para manejar cookies de sesión
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            this.isAdmin = true;
+                            this.updateAdminUI();
+                            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                            e.target.reset();
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Bienvenido!',
+                                text: 'Has iniciado sesión correctamente',
+                                timer: 1500
+                            });
+                        } else {
+                            throw new Error(data.message || 'Credenciales incorrectas');
+                        }
+                    } catch (error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de inicio de sesión',
+                            text: error.message || 'Error al intentar iniciar sesión'
+                        });
+                    }
+                });et/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 <body class="bg-light">
     <!-- Barra de navegación -->
@@ -102,16 +141,27 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="loginForm">
+                    <form id="loginForm" class="needs-validation" novalidate>
                         <div class="mb-3">
-                            <label class="form-label">Usuario</label>
-                            <input type="text" class="form-control" id="loginUsername" required>
+                            <label class="form-label">Usuario *</label>
+                            <input type="text" class="form-control" id="loginUsername" required
+                                   pattern="[A-Za-z0-9]+" minlength="3">
+                            <div class="invalid-feedback">
+                                El usuario es requerido (mínimo 3 caracteres, solo letras y números)
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="loginPassword" required>
+                            <label class="form-label">Contraseña *</label>
+                            <input type="password" class="form-control" id="loginPassword" required
+                                   minlength="6">
+                            <div class="invalid-feedback">
+                                La contraseña es requerida (mínimo 6 caracteres)
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+                        <div class="alert alert-danger d-none" id="loginAlert"></div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-box-arrow-in-right"></i> Ingresar
+                        </button>
                     </form>
                 </div>
             </div>
@@ -185,11 +235,602 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // URL de la API
+        const API_URL = 'php/api.php';
+        
+        // Estado global de la aplicación
+        const AppState = {
+            isAdmin: false,
+            currentEditId: null,
+
+            // Cargar investigadores
+            async loadInvestigadores() {
+                try {
+                    const response = await fetch(`${API_URL}?action=list`);
+                    const data = await response.json();
+                    if (data.success) {
+                        this.renderUI(data.data);
+                    } else {
+                        this.showError('Error al cargar investigadores');
+                    }
+                } catch (error) {
+                    this.showError('Error de conexión');
+                }
+            },
+
+            // Renderizar UI
+            renderUI(investigadores) {
+                const grid = document.getElementById('investigadoresGrid');
+                grid.innerHTML = '';
+                
+                investigadores.forEach(inv => {
+                    const card = `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100">
+                                <img src="${inv.foto}" class="card-img-top" alt="${inv.nombre}"
+                                     style="height: 250px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h5 class="card-title">${inv.nombre}</h5>
+                                    <p class="card-text">
+                                        <i class="bi bi-envelope"></i> ${inv.correo}<br>
+                                        <i class="bi bi-bookmark"></i> ${inv.area}
+                                    </p>
+                                    <div class="admin-controls ${this.isAdmin ? '' : 'd-none'}">
+                                        <button class="btn btn-warning btn-sm me-2" onclick="AppState.editarInvestigador(${inv.id})">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="AppState.eliminarInvestigador(${inv.id})">
+                                            <i class="bi bi-trash"></i> Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    grid.innerHTML += card;
+                });
+            },
+
+            // Iniciar sesión
+            async login(username, password) {
+                try {
+                    const response = await fetch(`${API_URL}?action=login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password }),
+                        credentials: 'include'
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        this.isAdmin = true;
+                        this.updateAdminUI();
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    this.showError('Error en el inicio de sesión');
+                    return false;
+                }
+            },
+
+            // Cerrar sesión
+            async logout() {
+                try {
+                    const response = await fetch(`${API_URL}?action=logout`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.isAdmin = false;
+                        this.updateAdminUI();
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    this.showError('Error al cerrar sesión');
+                }
+            },
+
+            // Actualizar UI para admin
+            updateAdminUI() {
+                const adminControls = document.getElementById('adminControls');
+                const adminButtons = document.querySelectorAll('.admin-controls');
+                const loginButton = document.querySelector('[data-bs-target="#loginModal"]');
+                
+                if (this.isAdmin) {
+                    adminControls.classList.remove('d-none');
+                    adminButtons.forEach(el => el.classList.remove('d-none'));
+                    loginButton.textContent = 'Cerrar Sesión';
+                    loginButton.setAttribute('data-bs-target', '');
+                    loginButton.onclick = () => this.logout();
+                } else {
+                    adminControls.classList.add('d-none');
+                    adminButtons.forEach(el => el.classList.add('d-none'));
+                    loginButton.textContent = 'Iniciar Sesión';
+                    loginButton.setAttribute('data-bs-target', '#loginModal');
+                    loginButton.onclick = null;
+                }
+            },
+
+            // Guardar investigador
+            async guardarInvestigador(formData) {
+                try {
+                    const response = await fetch(`${API_URL}?action=${this.currentEditId ? 'update' : 'create'}`, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        await this.loadInvestigadores();
+                        return true;
+                    }
+                    this.showError(data.message);
+                    return false;
+                } catch (error) {
+                    this.showError('Error al guardar los datos');
+                    return false;
+                }
+            },
+
+            // Editar investigador
+            async editarInvestigador(id) {
+                try {
+                    const response = await fetch(`${API_URL}?action=get&id=${id}`, {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        const investigador = data.data;
+                        this.currentEditId = id;
+                        document.getElementById('nombreInvestigador').value = investigador.nombre;
+                        document.getElementById('correoInvestigador').value = investigador.correo;
+                        document.getElementById('areaInvestigador').value = investigador.area;
+                        
+                        const previewImagen = document.getElementById('previewImagen');
+                        previewImagen.src = investigador.foto;
+                        previewImagen.classList.remove('d-none');
+                        
+                        document.querySelector('#addInvestigadorModal .modal-title')
+                            .textContent = 'Editar Investigador';
+                        new bootstrap.Modal(document.getElementById('addInvestigadorModal')).show();
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (error) {
+                    this.showError('Error al cargar los datos del investigador');
+                }
+            },
+
+            // Eliminar investigador
+            async eliminarInvestigador(id) {
+                const result = await Swal.fire({
+                    title: '¿Está seguro?',
+                    text: "Esta acción no se puede deshacer",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                });
+
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`${API_URL}?action=delete&id=${id}`, {
+                            method: 'DELETE',
+                            credentials: 'include'
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            await this.loadInvestigadores();
+                            Swal.fire('Eliminado', 'El investigador ha sido eliminado', 'success');
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    } catch (error) {
+                        this.showError('Error al eliminar el investigador');
+                    }
+                }
+            },
+
+            // Mostrar error
+            showError(message) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: message
+                });
+            },
+
+            // Verificar sesión
+            async checkSession() {
+                try {
+                    const response = await fetch(`${API_URL}?action=check_session`, {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.isAdmin = true;
+                        this.updateAdminUI();
+                    }
+                } catch (error) {
+                    console.error('Error checking session:', error);
+                }
+            },
+
+            // Inicializar
+            async init() {
+                await this.checkSession();
+                await this.loadInvestigadores();
+                this.setupEventListeners();
+            },
+
+            // Configurar event listeners
+            setupEventListeners() {
+                // Login
+                document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const username = document.getElementById('loginUsername').value;
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    if (await this.login(username, password)) {
+                        bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                        e.target.reset();
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Bienvenido!',
+                            text: 'Has iniciado sesión correctamente',
+                            timer: 1500
+                        });
+                    }
+                });
+
+                // Formulario de investigador
+                document.getElementById('investigadorForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    if (!e.target.checkValidity()) {
+                        e.target.classList.add('was-validated');
+                        return;
+                    }
+
+                    const formData = new FormData(e.target);
+                    if (this.currentEditId) {
+                        formData.append('id', this.currentEditId);
+                    }
+
+                    if (await this.guardarInvestigador(formData)) {
+                        bootstrap.Modal.getInstance(document.getElementById('addInvestigadorModal')).hide();
+                        e.target.reset();
+                        e.target.classList.remove('was-validated');
+                        document.getElementById('previewImagen').classList.add('d-none');
+                        this.currentEditId = null;
+                        document.querySelector('#addInvestigadorModal .modal-title').textContent = 'Agregar Investigador';
+                        Swal.fire('¡Éxito!', 'Datos guardados correctamente', 'success');
+                    }
+                });
+
+                // Preview de imagen
+                document.getElementById('fotoInvestigador').addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const previewImagen = document.getElementById('previewImagen');
+                            previewImagen.src = e.target.result;
+                            previewImagen.classList.remove('d-none');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                // Reset form al cerrar modal
+                document.getElementById('addInvestigadorModal').addEventListener('hidden.bs.modal', () => {
+                    document.getElementById('investigadorForm').reset();
+                    document.getElementById('previewImagen').classList.add('d-none');
+                    this.currentEditId = null;
+                    document.querySelector('#addInvestigadorModal .modal-title').textContent = 'Agregar Investigador';
+                });
+            }
+        };
+
+        // Iniciar la aplicación cuando el documento esté listo
+        document.addEventListener('DOMContentLoaded', () => AppState.init());
+        // Namespace global para la aplicación
+        window.InvestigadoresApp = {
+            API_URL: 'php/api.php',
+            isAdmin: false,
+            currentEditId: null,
+
+            // Inicialización
+            async init() {
+                await this.loadInvestigadores();
+                this.setupEventListeners();
+                this.checkSession();
+            },
+
+            // Cargar investigadores desde la base de datos
+            async loadInvestigadores() {
+                try {
+                    const response = await fetch(`${this.API_URL}?action=list`);
+                    const data = await response.json();
+                    if (data.success) {
+                        this.renderUI(data.data);
+                    } else {
+                        this.showError('Error al cargar investigadores');
+                    }
+                } catch (error) {
+                    this.showError('Error de conexión');
+                }
+            },
+
+            // Verificar sesión existente
+            async checkSession() {
+                try {
+                    const response = await fetch(`${this.API_URL}?action=check_session`);
+                    const data = await response.json();
+                    if (data.success) {
+                        this.isAdmin = true;
+                        this.updateAdminUI();
+                    }
+                } catch (error) {
+                    console.error('Error verificando sesión:', error);
+                }
+            },
+
+            // Renderizar interfaz
+            renderUI(investigadores) {
+                const grid = document.getElementById('investigadoresGrid');
+                grid.innerHTML = '';
+                
+                investigadores.forEach(inv => {
+                    const card = `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100">
+                                <img src="${inv.foto}" class="card-img-top" alt="${inv.nombre}"
+                                     style="height: 250px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h5 class="card-title">${inv.nombre}</h5>
+                                    <p class="card-text">
+                                        <i class="bi bi-envelope"></i> ${inv.correo}<br>
+                                        <i class="bi bi-bookmark"></i> ${inv.area}
+                                    </p>
+                                    <div class="admin-controls ${this.isAdmin ? '' : 'd-none'}">
+                                        <button class="btn btn-warning btn-sm me-2" onclick="InvestigadoresApp.editarInvestigador(${inv.id})">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="InvestigadoresApp.eliminarInvestigador(${inv.id})">
+                                            <i class="bi bi-trash"></i> Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    grid.innerHTML += card;
+                });
+            },
+
+            // Configurar event listeners
+            setupEventListeners() {
+                // Login form
+                document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    if (!e.target.checkValidity()) {
+                        e.target.classList.add('was-validated');
+                        return;
+                    }
+
+                    const username = document.getElementById('loginUsername').value;
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    try {
+                        const response = await fetch(`${this.API_URL}?action=login`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ username, password }),
+                            credentials: 'include'
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            this.isAdmin = true;
+                            this.updateAdminUI();
+                            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                            e.target.reset();
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Bienvenido!',
+                                text: 'Has iniciado sesión correctamente',
+                                timer: 1500
+                            });
+                        } else {
+                            throw new Error(data.message || 'Credenciales incorrectas');
+                        }
+                    } catch (error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de inicio de sesión',
+                            text: error.message || 'Error al intentar iniciar sesión'
+                        });
+                    }
+                });
+
+                // Formulario de investigador
+                document.getElementById('investigadorForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    if (!e.target.checkValidity()) {
+                        e.target.classList.add('was-validated');
+                        return;
+                    }
+
+                    const formData = new FormData(e.target);
+                    if (this.currentEditId) {
+                        formData.append('id', this.currentEditId);
+                    }
+
+                    try {
+                        const response = await fetch(`${this.API_URL}?action=${this.currentEditId ? 'update' : 'create'}`, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            await this.loadInvestigadores();
+                            bootstrap.Modal.getInstance(document.getElementById('addInvestigadorModal')).hide();
+                            e.target.reset();
+                            e.target.classList.remove('was-validated');
+                            document.getElementById('previewImagen').classList.add('d-none');
+                            this.currentEditId = null;
+                            Swal.fire('¡Éxito!', 'Datos guardados correctamente', 'success');
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    } catch (error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: error.message || 'Error al guardar los datos'
+                        });
+                    }
+                });
+
+                // Preview de imagen
+                document.getElementById('fotoInvestigador').addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const previewImagen = document.getElementById('previewImagen');
+                            previewImagen.src = e.target.result;
+                            previewImagen.classList.remove('d-none');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            },
+
+            // Actualizar UI para admin
+            updateAdminUI() {
+                const adminControls = document.getElementById('adminControls');
+                const adminButtons = document.querySelectorAll('.admin-controls');
+                const loginButton = document.querySelector('[data-bs-target="#loginModal"]');
+                
+                if (this.isAdmin) {
+                    adminControls.classList.remove('d-none');
+                    adminButtons.forEach(el => el.classList.remove('d-none'));
+                    loginButton.textContent = 'Cerrar Sesión';
+                    loginButton.setAttribute('data-bs-target', '');
+                    loginButton.onclick = () => this.logout();
+                } else {
+                    adminControls.classList.add('d-none');
+                    adminButtons.forEach(el => el.classList.add('d-none'));
+                    loginButton.textContent = 'Iniciar Sesión';
+                    loginButton.setAttribute('data-bs-target', '#loginModal');
+                    loginButton.onclick = null;
+                }
+            },
+
+            // Editar investigador
+            async editarInvestigador(id) {
+                try {
+                    const response = await fetch(`${this.API_URL}?action=get&id=${id}`);
+                    const data = await response.json();
+                    if (data.success) {
+                        const investigador = data.data;
+                        this.currentEditId = id;
+                        document.getElementById('nombreInvestigador').value = investigador.nombre;
+                        document.getElementById('correoInvestigador').value = investigador.correo;
+                        document.getElementById('areaInvestigador').value = investigador.area;
+                        
+                        const previewImagen = document.getElementById('previewImagen');
+                        previewImagen.src = investigador.foto;
+                        previewImagen.classList.remove('d-none');
+                        
+                        document.getElementById('addInvestigadorModal').querySelector('.modal-title')
+                            .textContent = 'Editar Investigador';
+                        new bootstrap.Modal(document.getElementById('addInvestigadorModal')).show();
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (error) {
+                    this.showError('Error al cargar los datos del investigador');
+                }
+            },
+
+            // Eliminar investigador
+            async eliminarInvestigador(id) {
+                const result = await Swal.fire({
+                    title: '¿Está seguro?',
+                    text: "Esta acción no se puede deshacer",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                });
+
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`${this.API_URL}?action=delete&id=${id}`, {
+                            method: 'DELETE'
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            await this.loadInvestigadores();
+                            Swal.fire('Eliminado', 'El investigador ha sido eliminado', 'success');
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    } catch (error) {
+                        this.showError('Error al eliminar el investigador');
+                    }
+                }
+            },
+
+            // Cerrar sesión
+            async logout() {
+                try {
+                    const response = await fetch(`${this.API_URL}?action=logout`, {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.isAdmin = false;
+                        this.updateAdminUI();
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    this.showError('Error al cerrar sesión');
+                }
+            },
+
+            // Mostrar error
+            showError(message) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: message
+                });
+            }
+        };
+
+        // Iniciar la aplicación cuando el documento esté listo
+        document.addEventListener('DOMContentLoaded', () => InvestigadoresApp.init());
         const API_URL = 'php/api.php';
         
         // Estado de la aplicación
         const AppState = {
             isAdmin: false,
+            currentEditId: null,
             
             // Cargar investigadores desde la base de datos
             async loadInvestigadores() {
@@ -356,12 +997,9 @@
 
         // Inicializar la aplicación
         const app = {
-            ...AppState,
-            
             async init() {
-                await this.loadInvestigadores();
                 this.setupEventListeners();
-            },
+                await this.loadInvestigadores();
 
             setupEventListeners() {
                 // Login

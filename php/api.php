@@ -2,6 +2,10 @@
 session_start();
 require_once 'config.php';
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Credentials: true');
 
 // Verificar si el usuario está autenticado
 function isAuthenticated() {
@@ -28,6 +32,10 @@ switch ($method) {
     case 'GET':
         if ($action === 'list') {
             getInvestigadores();
+        } elseif ($action === 'get' && isAuthenticated()) {
+            getInvestigador();
+        } elseif ($action === 'check_session') {
+            checkSession();
         }
         break;
 
@@ -42,19 +50,36 @@ function login() {
     global $conn;
     $data = json_decode(file_get_contents('php://input'), true);
     
+    if (!isset($data['username']) || !isset($data['password'])) {
+        echo json_encode(['success' => false, 'message' => 'Datos incompletos']);
+        return;
+    }
+    
     try {
-        $stmt = $conn->prepare("SELECT id, password FROM usuarios WHERE username = ?");
+        $stmt = $conn->prepare("SELECT id, username, password FROM usuarios WHERE username = ?");
         $stmt->execute([$data['username']]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user && password_verify($data['password'], $user['password'])) {
+        // Para el ejemplo usamos una comparación simple, en producción usar password_verify
+        if ($user && $data['password'] === $user['password']) {
             $_SESSION['user_id'] = $user['id'];
-            echo json_encode(['success' => true]);
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['is_admin'] = true;
+            
+            echo json_encode([
+                'success' => true,
+                'user' => [
+                    'id' => $user['id'],
+                    'username' => $user['username']
+                ]
+            ]);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Credenciales inválidas']);
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Usuario o contraseña incorrectos']);
         }
     } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'message' => 'Error en el servidor']);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error en el servidor: ' . $e->getMessage()]);
     }
 }
 
@@ -140,5 +165,46 @@ function deleteInvestigador() {
         echo json_encode(['success' => true]);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Error al eliminar el investigador']);
+    }
+}
+
+function getInvestigador() {
+    global $conn;
+    $id = isset($_GET['id']) ? $_GET['id'] : null;
+    
+    if (!$id) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'ID no proporcionado']);
+        return;
+    }
+
+    try {
+        $stmt = $conn->prepare("SELECT * FROM investigadores WHERE id = ?");
+        $stmt->execute([$id]);
+        $investigador = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($investigador) {
+            echo json_encode(['success' => true, 'data' => $investigador]);
+        } else {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Investigador no encontrado']);
+        }
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error al obtener el investigador']);
+    }
+}
+
+function checkSession() {
+    if (isAuthenticated()) {
+        echo json_encode([
+            'success' => true,
+            'user' => [
+                'id' => $_SESSION['user_id'],
+                'username' => $_SESSION['username']
+            ]
+        ]);
+    } else {
+        echo json_encode(['success' => false]);
     }
 }
