@@ -1,0 +1,26 @@
+{
+    "investigadores": [
+        {
+            "id": 1,
+            "nombre": "ABERTH AVILEZ ALDANA",
+            "correo": "aberth.avilez@escar.edu.co",
+            "area": "tecnologia",
+            "foto": "https://via.placeholder.com/150"
+        },
+        {
+            "id": 2,
+            "nombre": "ABRAHAM GONZALEZ",
+            "correo": "abraham.gonzalez@escar.edu.co",
+            "area": "ciencias",
+            "foto": "https://via.placeholder.com/150"
+        }
+    ],
+    "usuarios": [
+        {
+            "id": 1,
+            "username": "admin",
+            "password": "admin123",
+            "rol": "administrador"
+        }
+    ]
+}
