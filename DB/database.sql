@@ -24,5 +24,5 @@ CREATE TABLE IF NOT EXISTS investigadores (
 
 -- Insertar usuario administrador por defecto
 INSERT INTO usuarios (username, password, rol) VALUES
-('admin', '$2y$10$92InkZQMr6wF9A8t8D8Zj.Ol.I8mQ8Y6WR8U8iX.h3R/E5g5Y6kK', 'administrador');
+('admin', '$2y$10$RfdCgxXwknTc4NJZYGQzv.BaGynOWNB.JeqoKu6RNL/tvFpTRXk2.', 'administrador');
 -- La contraseña es 'admin123' hasheada con bcrypt
