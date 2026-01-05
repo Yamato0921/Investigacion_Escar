@@ -186,10 +186,10 @@ Análisis financiero detallado para la construcción de este sistema, basado en 
 
 ### 8.1 Registro de Cambios (Changelog)
 
-*   **v1.0 (03-Ene-2026)**: Lanzamiento inicial (Alpha).
-*   **v2.0 (05-Ene-2026)**: Integración de estilos institucionales y lógica JS.
+*   **v1.0 (11-Oct-2025)**: Lanzamiento inicial (Alpha).
+*   **v2.0 (17-Oct-2025)**: Integración de estilos institucionales y lógica JS.
 *   **v3.0 (05-Ene-2026)**: Migración Cloud, Empaquetado Portable y Mejoras UX (Scroll/TopBtn).
-    *   *Autor*: Equipo de Desarrollo Antigravity.
+    *   *Autor*: Equipo de Desarrollo Semillero Manos Verdes.
 
 ### 8.2 Soporte
 Para reportar fallos o solicitar nuevas funcionalidades, contactar al Departamento de Telemática de la Dirección de Escuelas.
