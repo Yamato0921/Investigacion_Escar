@@ -1,20 +1,24 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Semilleros de Investigación</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="Css/Styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="CSS/Styles.css">
 </head>
+
 <body>
-    
+
     <!-- Menú de navegación con iconos -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="Index.html">
-                <img src="Src/Images/logo.png" alt="Logo" height="40" class="me-2">
+                <img src="https://www.policia.gov.co/sites/default/files/2024-02/Escudo9_0.jpg?fid=400799" alt="Logo"
+                    height="40" class="me-2">
                 ESCAR
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -43,7 +47,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <button id="btnLogin" class="btn btn-outline-light ms-2" onclick="handleLoginClick()">
+                        <button id="btnLogin" class="btn btn-outline-light ms-2">
                             <i class="bi bi-person"></i> INICIAR SESIÓN
                         </button>
                     </li>
@@ -51,41 +55,6 @@
             </div>
         </div>
     </nav>
-
-    <!-- Modal de Login -->
-    <div class="modal fade" id="loginModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Iniciar Sesión</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="loginForm" class="needs-validation" novalidate>
-                        <div class="mb-3">
-                            <label class="form-label">Usuario *</label>
-                            <input type="text" class="form-control" id="loginUsername" required
-                                   pattern="[A-Za-z0-9]+" minlength="3">
-                            <div class="invalid-feedback">
-                                El usuario es requerido (mínimo 3 caracteres, solo letras y números)
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Contraseña *</label>
-                            <input type="password" class="form-control" id="loginPassword" required
-                                   minlength="6">
-                            <div class="invalid-feedback">
-                                La contraseña es requerida (mínimo 6 caracteres)
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-box-arrow-in-right"></i> Ingresar
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Modal Agregar/Editar Investigador -->
     <div class="modal fade" id="addInvestigadorModal" tabindex="-1">
@@ -117,9 +86,8 @@
                             <label class="form-label">Foto</label>
                             <input type="file" class="form-control mb-2" id="fotoInvestigador" accept="image/*">
                             <div class="text-center">
-                                <img id="previewImagen" src="" alt="Vista previa" 
-                                     class="d-none rounded-3 shadow-sm" 
-                                     style="max-width: 200px; max-height: 200px; object-fit: cover;">
+                                <img id="previewImagen" src="" alt="Vista previa" class="d-none rounded-3 shadow-sm"
+                                    style="max-width: 200px; max-height: 200px; object-fit: cover;">
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary">Guardar</button>
@@ -130,17 +98,28 @@
     </div>
 
     <div class="container mt-4">
+        <!-- Banner/Header -->
+        <div
+            class="position-relative overflow-hidden bg-dark text-white mb-5 rounded animate__animated animate__fadeIn">
+            <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+                class="position-absolute w-100 h-100 object-fit-cover opacity-50" alt="Banner Semilleros">
+            <div class="position-relative p-5 text-center">
+                <h1 class="display-4 fw-bold">Semilleros de Investigación</h1>
+                <p class="lead">Formación y experimentación científica</p>
+            </div>
+        </div>
+
         <!-- Área de búsqueda y filtrado -->
-        <div class="row g-3 mb-4 align-items-center">
+        <div class="row g-3 mb-4 align-items-center animate__animated animate__fadeInUp">
             <div class="col-md-4">
                 <div class="form-floating">
                     <select class="form-select" id="searchFilter">
-                        <option value="nombre">Nombre del Semillero de Investigación</option>
-                        <option value="codigo">Código del semillero</option>
-                        <option value="responsable">Responsable del semillero</option>
-                        <option value="unidadAcademica">Unidad académica responsable</option>
+                        <option value="nombre">Nombre del Semillero</option>
+                        <option value="codigo">Código</option>
+                        <option value="responsable">Responsable</option>
+                        <option value="unidadAcademica">Unidad Académica</option>
                     </select>
-                    <label for="searchFilter">Seleccione el filtro a aplicar</label>
+                    <label for="searchFilter">Seleccione el filtro</label>
                 </div>
             </div>
             <div class="col-md-6">
@@ -150,13 +129,13 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <button class="btn btn-primary w-100 h-100" onclick="SemillerosApp.buscarSemilleros()">
+                <button class="btn btn-primary w-100 h-100 shadow-sm" onclick="SemillerosApp.buscarSemilleros()">
                     <i class="bi bi-search"></i> Buscar
                 </button>
             </div>
             <div class="col-12 text-center admin-controls d-none">
-                <button class="btn btn-success" onclick="SemillerosApp.mostrarFormulario()">
-                    <i class="bi bi-plus-circle"></i> Postularse a semilleros
+                <button class="btn btn-success shadow-sm" onclick="SemillerosApp.mostrarFormulario()">
+                    <i class="bi bi-plus-circle"></i> Nuevo Semillero
                 </button>
             </div>
         </div>
@@ -175,7 +154,7 @@
                     <div class="modal-body">
                         <form id="semilleroForm" class="row g-3">
                             <input type="hidden" id="semilleroId">
-                            
+
                             <div class="col-md-12">
                                 <div class="form-floating">
                                     <input type="text" class="form-control" id="nombre" required>
@@ -259,8 +238,8 @@
                     <form id="loginForm" onsubmit="SemillerosApp.iniciarSesion(event)">
                         <div class="mb-3">
                             <div class="form-floating">
-                                <input type="email" class="form-control" id="loginEmail" required>
-                                <label for="loginEmail">Correo Institucional</label>
+                                <input type="text" class="form-control" id="loginEmail" required>
+                                <label for="loginEmail">Correo Institucional / Usuario</label>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -281,7 +260,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="JS/auth.js"></script>
     <script src="JS/semilleros.js"></script>
 </body>
+
 </html>

@@ -3,45 +3,62 @@ class SemillerosApp {
 
     static async init() {
         console.log('SemillerosApp Init');
-        
+
         // Configurar el botón de login
         const btnLogin = document.getElementById('btnLogin');
         if (btnLogin) {
             btnLogin.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.handleLogin();
+                if (AuthManager.isAuthenticated()) {
+                    if (confirm('¿Está seguro que desea cerrar sesión?')) {
+                        AuthManager.logout();
+                        location.reload();
+                    }
+                } else {
+                    const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                    loginModal.show();
+                }
             });
+        }
+
+        // Configurar el formulario de login
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => this.iniciarSesion(e));
         }
 
         // Actualizar UI según estado de autenticación
         this.actualizarBotonLogin();
-        
+
         // Cargar los semilleros
         await this.cargarSemilleros();
-        
+
         // Mostrar/ocultar controles de admin
         this.updateAdminControls();
     }
 
-    static handleLogin() {
-        if (AuthManager.isAuthenticated()) {
-            if (confirm('¿Está seguro que desea cerrar sesión?')) {
-                AuthManager.logout();
-                location.reload();
-            }
-        } else {
-            const username = prompt('Usuario:');
-            if (!username) return;
-            
-            const password = prompt('Contraseña:');
-            if (!password) return;
+    static iniciarSesion(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
 
-            if (AuthManager.login(username, password)) {
-                alert('Inicio de sesión exitoso');
+        // Validar credenciales (admin/admin123 para demo)
+        if (AuthManager.login(email, password) || (email === 'admin' && password === 'admin123')) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Bienvenido!',
+                text: 'Has iniciado sesión correctamente',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
                 location.reload();
-            } else {
-                alert('Credenciales incorrectas');
-            }
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Usuario o contraseña incorrectos'
+            });
         }
     }
 
@@ -63,14 +80,47 @@ class SemillerosApp {
     static updateAdminControls() {
         const adminControls = document.querySelectorAll('.admin-controls');
         const isAdmin = AuthManager.isAuthenticated();
-        console.log('Updating admin controls, isAdmin:', isAdmin);
         adminControls.forEach(el => {
-            el.classList.toggle('d-none', !isAdmin);
+            if (isAdmin) {
+                el.classList.remove('d-none');
+            } else {
+                el.classList.add('d-none');
+            }
         });
     }
 
     static async cargarSemilleros() {
-        const semilleros = JSON.parse(localStorage.getItem('semilleros') || '[]');
+        let semilleros = JSON.parse(localStorage.getItem('semilleros') || '[]');
+
+        // Si no hay semilleros, agregar algunos por defecto para demostración
+        if (semilleros.length === 0) {
+            semilleros = [
+                {
+                    id: 1,
+                    nombre: "Semillero de Investigación en Inteligencia Artificial",
+                    codigo: "SIA-001",
+                    responsable: "Dr. Carlos Rodríguez",
+                    unidadAcademica: "Ingeniería de Sistemas",
+                    acronimo: "SIA",
+                    fechaCreacion: "2023-01-15",
+                    logo: "https://cdn-icons-png.flaticon.com/512/2083/2083213.png",
+                    estado: "ACTIVO"
+                },
+                {
+                    id: 2,
+                    nombre: "Semillero de Energías Renovables",
+                    codigo: "SER-002",
+                    responsable: "Dra. María López",
+                    unidadAcademica: "Ingeniería Ambiental",
+                    acronimo: "SER",
+                    fechaCreacion: "2023-03-20",
+                    logo: "https://cdn-icons-png.flaticon.com/512/3109/3109839.png",
+                    estado: "ACTIVO"
+                }
+            ];
+            localStorage.setItem('semilleros', JSON.stringify(semilleros));
+        }
+
         this.semillerosOriginales = semilleros;
         this.renderUI(semilleros);
     }
@@ -78,7 +128,7 @@ class SemillerosApp {
     static async buscarSemilleros() {
         const filtro = document.getElementById('searchFilter').value;
         const valor = document.getElementById('searchValue').value.toLowerCase();
-        
+
         if (!valor) {
             this.renderUI(this.semillerosOriginales);
             return;
@@ -94,38 +144,38 @@ class SemillerosApp {
     static renderUI(semilleros) {
         const grid = document.getElementById('semillerosGrid');
         grid.innerHTML = '';
-        
-        semilleros.forEach(sem => {
+
+        semilleros.forEach(semillero => {
             const card = `
-                <div class="col-12 mb-3">
-                    <div class="card">
-                        <div class="card-body d-flex align-items-center p-3">
-                            <div class="me-4" style="width: 100px; height: 100px;">
-                                <img src="${sem.logo}" 
-                                     class="img-fluid rounded-circle"
-                                     alt="${sem.nombre}"
-                                     style="width: 100px; height: 100px; object-fit: cover;">
+                <div class="col-md-6 mb-4 animate__animated animate__fadeIn">
+                    <div class="card h-100 shadow-sm hover-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="${semillero.logo}" alt="Logo" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                <div>
+                                    <h5 class="card-title mb-0 text-primary">${semillero.nombre}</h5>
+                                    <small class="text-muted"><i class="bi bi-person-badge"></i> Resp: ${semillero.responsable}</small>
+                                </div>
                             </div>
-                            <div class="flex-grow-1">
-                                <h4 class="text-primary mb-1">${sem.nombre}</h4>
-                                <div class="mb-2">
-                                    <strong>Código del semillero:</strong> ${sem.codigo}<br>
-                                    <strong>Responsable del semillero:</strong> ${sem.responsable}<br>
-                                    <strong>Unidad académica responsable:</strong> ${sem.unidadAcademica}<br>
-                                    <strong>Acrónimo:</strong> ${sem.acronimo}<br>
-                                    <strong>Fecha de creación:</strong> ${new Date(sem.fechaCreacion).toLocaleDateString('es-CO')}
-                                </div>
-                                <button class="btn btn-outline-primary btn-sm px-4">
-                                    Ver semillero
+                            <h6 class="card-subtitle mb-2 text-muted fw-bold">${semillero.unidadAcademica}</h6>
+                            <p class="card-text"><i class="bi bi-upc-scan"></i> Código: ${semillero.codigo}</p>
+                            <p class="card-text"><i class="bi bi-tag"></i> Acrónimo: ${semillero.acronimo}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="badge ${semillero.estado === 'ACTIVO' ? 'bg-success' : 'bg-danger'}">${semillero.estado || 'ACTIVO'}</span>
+                                <small class="text-muted"><i class="bi bi-calendar"></i> ${semillero.fechaCreacion}</small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0 pb-3">
+                            <button class="btn btn-outline-primary w-100 mb-2" onclick="SemillerosApp.verDetalle(${semillero.id})">
+                                <i class="bi bi-eye"></i> Ver Semillero
+                            </button>
+                            <div class="d-flex justify-content-end gap-2 admin-controls ${AuthManager.isAuthenticated() ? '' : 'd-none'}">
+                                <button class="btn btn-warning btn-sm flex-grow-1" onclick="SemillerosApp.editarSemillero(${semillero.id})">
+                                    <i class="bi bi-pencil"></i> Editar
                                 </button>
-                                <div class="admin-controls d-inline-block ms-2 ${AuthManager.isAuthenticated() ? '' : 'd-none'}">
-                                    <button class="btn btn-warning btn-sm" onclick="SemillerosApp.editarSemillero(${sem.id})">
-                                        <i class="bi bi-pencil"></i> Editar
-                                    </button>
-                                    <button class="btn btn-danger btn-sm" onclick="SemillerosApp.eliminarSemillero(${sem.id})">
-                                        <i class="bi bi-trash"></i> Eliminar
-                                    </button>
-                                </div>
+                                <button class="btn btn-danger btn-sm flex-grow-1" onclick="SemillerosApp.eliminarSemillero(${semillero.id})">
+                                    <i class="bi bi-trash"></i> Eliminar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -133,6 +183,81 @@ class SemillerosApp {
             `;
             grid.innerHTML += card;
         });
+
+        // Re-check admin controls
+        this.updateAdminControls();
+    }
+
+    static verDetalle(id) {
+        const semillero = this.semillerosOriginales.find(s => s.id == id);
+        if (!semillero) return;
+
+        // Mock investigadores data
+        const investigadoresMock = [
+            { id: 1, nombre: "Juan Pérez", area: "Inteligencia Artificial" },
+            { id: 2, nombre: "María García", area: "Machine Learning" }
+        ];
+
+        let investigadoresHtml = '';
+        investigadoresMock.forEach(inv => {
+            investigadoresHtml += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${inv.nombre}
+                    <small class="text-muted">${inv.area}</small>
+                    <a href="Investigadores.html?view=${inv.id}" class="btn btn-sm btn-outline-info">
+                        Ver Investigador <i class="bi bi-arrow-right"></i>
+                    </a>
+                </li>
+            `;
+        });
+
+        const modalHtml = `
+            <div class="modal fade" id="detalleModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Detalles del Semillero</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center mb-4">
+                                <img src="${semillero.logo}" class="rounded-circle shadow mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                                <h3>${semillero.nombre}</h3>
+                                <p class="lead text-muted">${semillero.unidadAcademica}</p>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Información General</h5>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Código:</strong> ${semillero.codigo}</li>
+                                        <li><strong>Responsable:</strong> ${semillero.responsable}</li>
+                                        <li><strong>Acrónimo:</strong> ${semillero.acronimo}</li>
+                                        <li><strong>Fecha Creación:</strong> ${semillero.fechaCreacion}</li>
+                                        <li><strong>Estado:</strong> <span class="badge ${semillero.estado === 'ACTIVO' ? 'bg-success' : 'bg-danger'}">${semillero.estado || 'ACTIVO'}</span></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Investigadores Asociados</h5>
+                                    <ul class="list-group list-group-flush">
+                                        ${investigadoresHtml}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const oldModal = document.getElementById('detalleModal');
+        if (oldModal) oldModal.remove();
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('detalleModal'), { backdrop: false }); // backdrop false to avoid double backdrop if needed, or default
+        modal.show();
     }
 
     static mostrarFormulario(semillero = null) {
@@ -201,6 +326,15 @@ class SemillerosApp {
                                         <label>URL del Logo</label>
                                     </div>
                                 </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="estado" required>
+                                            <option value="ACTIVO" ${semillero?.estado === 'ACTIVO' ? 'selected' : ''}>Activo</option>
+                                            <option value="INACTIVO" ${semillero?.estado === 'INACTIVO' ? 'selected' : ''}>Inactivo</option>
+                                        </select>
+                                        <label>Estado</label>
+                                    </div>
+                                </div>
                             </form>
                         </div>
                         <div class="modal-footer">
@@ -222,10 +356,10 @@ class SemillerosApp {
 
         // Agregar nuevo modal al DOM
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
-        // Mostrar modal
-        const modal = new bootstrap.Modal(document.getElementById('semilleroModal'));
-        modal.show();
+
+        // Mostrar modal y guardar referencia
+        this.activeModal = new bootstrap.Modal(document.getElementById('semilleroModal'));
+        this.activeModal.show();
     }
 
     static async guardarSemillero() {
@@ -249,7 +383,7 @@ class SemillerosApp {
         };
 
         let semilleros = JSON.parse(localStorage.getItem('semilleros') || '[]');
-        
+
         if (semilleroId) {
             const index = semilleros.findIndex(s => s.id == semilleroId);
             if (index !== -1) {
@@ -260,7 +394,16 @@ class SemillerosApp {
         }
 
         localStorage.setItem('semilleros', JSON.stringify(semilleros));
-        this.modal.hide();
+
+        if (this.activeModal) {
+            this.activeModal.hide();
+        } else {
+            // Fallback try to find modal
+            const el = document.getElementById('semilleroModal');
+            const instance = bootstrap.Modal.getInstance(el);
+            if (instance) instance.hide();
+        }
+
         await this.cargarSemilleros();
     }
 
@@ -273,14 +416,30 @@ class SemillerosApp {
     }
 
     static async eliminarSemillero(id) {
-        if (!confirm('¿Está seguro de que desea eliminar este semillero?')) {
-            return;
-        }
+        const result = await Swal.fire({
+            title: '¿Está seguro?',
+            text: "Esta acción no se puede deshacer",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
 
-        let semilleros = JSON.parse(localStorage.getItem('semilleros') || '[]');
-        semilleros = semilleros.filter(s => s.id != id);
-        localStorage.setItem('semilleros', JSON.stringify(semilleros));
-        await this.cargarSemilleros();
+        if (result.isConfirmed) {
+            let semilleros = JSON.parse(localStorage.getItem('semilleros') || '[]');
+            semilleros = semilleros.filter(s => s.id != id);
+            localStorage.setItem('semilleros', JSON.stringify(semilleros));
+
+            await this.cargarSemilleros();
+
+            Swal.fire(
+                '¡Eliminado!',
+                'El semillero ha sido eliminado.',
+                'success'
+            );
+        }
     }
 }
 

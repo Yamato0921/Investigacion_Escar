@@ -5,29 +5,25 @@ const investigadoresIniciales = [
         nombre: "Juan Pérez",
         correo: "juan.perez@escar.edu.co",
         area: "Tecnología",
-        foto: "Src/Images/investigador1.jpg"
+        foto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     },
     {
         id: 2,
         nombre: "María García",
         correo: "maria.garcia@escar.edu.co",
         area: "Ciencias",
-        foto: "Src/Images/investigador2.jpg"
+        foto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     },
     {
         id: 3,
         nombre: "Carlos Rodríguez",
         correo: "carlos.rodriguez@escar.edu.co",
         area: "Humanidades",
-        foto: "Src/Images/investigador3.jpg"
+        foto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
     }
 ];
 
-// Datos de usuario admin
-const adminUser = {
-    username: "admin",
-    password: "admin123"
-};
+
 
 const InvestigadoresApp = {
     isAdmin: false,
@@ -41,6 +37,17 @@ const InvestigadoresApp = {
         this.checkSession();
         this.loadInvestigadores();
         this.setupEventListeners();
+        this.checkUrlParams();
+    },
+
+    checkUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewId = urlParams.get('view');
+        if (viewId) {
+            setTimeout(() => {
+                this.editarInvestigador(viewId, true);
+            }, 500);
+        }
     },
 
     // Inicializar datos si no existen
@@ -60,28 +67,30 @@ const InvestigadoresApp = {
     renderUI(investigadores) {
         const grid = document.getElementById('investigadoresGrid');
         grid.innerHTML = '';
-        
+
         investigadores.forEach(inv => {
             const card = `
                 <div class="col-md-6 col-lg-4">
-                    <div class="card h-100">
+                    <div class="card h-100 shadow-sm border-0 overflow-hidden hover-card">
                         <div class="investigador-img-container position-relative" style="height: 350px; overflow: hidden;">
                             <img src="${inv.foto}" 
                                  class="position-absolute w-100 h-100" 
                                  alt="${inv.nombre}"
                                  style="object-fit: cover; object-position: center 20%;">
+                            <div class="overlay position-absolute bottom-0 w-100 p-3 text-white" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+                                <h5 class="card-title mb-1">${inv.nombre}</h5>
+                                <small><i class="bi bi-bookmark-fill"></i> ${inv.area}</small>
+                            </div>
                         </div>
                         <div class="card-body">
-                            <h5 class="card-title">${inv.nombre}</h5>
-                            <p class="card-text">
-                                <i class="bi bi-envelope"></i> ${inv.correo}<br>
-                                <i class="bi bi-bookmark"></i> ${inv.area}
-                            </p>
+                            <button class="btn btn-outline-primary w-100 mb-2" onclick="InvestigadoresApp.verInvestigador(${inv.id})">
+                                <i class="bi bi-person-lines-fill"></i> Ver Perfil
+                            </button>
                             <div class="admin-controls ${this.isAdmin ? '' : 'd-none'}">
-                                <button class="btn btn-warning btn-sm me-2" onclick="InvestigadoresApp.editarInvestigador(${inv.id})">
+                                <button class="btn btn-warning btn-sm w-100 mb-1" onclick="InvestigadoresApp.editarInvestigador(${inv.id})">
                                     <i class="bi bi-pencil"></i> Editar
                                 </button>
-                                <button class="btn btn-danger btn-sm" onclick="InvestigadoresApp.eliminarInvestigador(${inv.id})">
+                                <button class="btn btn-danger btn-sm w-100" onclick="InvestigadoresApp.eliminarInvestigador(${inv.id})">
                                     <i class="bi bi-trash"></i> Eliminar
                                 </button>
                             </div>
@@ -93,22 +102,15 @@ const InvestigadoresApp = {
         });
     },
 
-    // Verificar sesión
+    // Verificación de sesión usando AuthManager
     checkSession() {
-        const session = localStorage.getItem('session');
-        if (session === 'active') {
-            this.isAdmin = true;
-            this.updateAdminUI();
-        } else {
-            this.isAdmin = false;
-            this.updateAdminUI();
-        }
+        this.isAdmin = AuthManager.isAuthenticated();
+        this.updateAdminUI();
     },
 
-    // Login
+    // Login usando AuthManager
     login(username, password) {
-        if (username === adminUser.username && password === adminUser.password) {
-            localStorage.setItem('session', 'active');
+        if (AuthManager.login(username, password)) {
             this.isAdmin = true;
             this.updateAdminUI();
             return true;
@@ -116,9 +118,9 @@ const InvestigadoresApp = {
         return false;
     },
 
-    // Logout
+    // Logout usando AuthManager
     logout() {
-        localStorage.removeItem('session');
+        AuthManager.logout();
         this.isAdmin = false;
         this.updateAdminUI();
         Swal.fire({
@@ -133,19 +135,29 @@ const InvestigadoresApp = {
     updateAdminUI() {
         const adminControls = document.getElementById('adminControls');
         const adminButtons = document.querySelectorAll('.admin-controls');
-        
+        const btnLogin = this.loginButton;
+
         if (this.isAdmin) {
-            adminControls.classList.remove('d-none');
+            if (adminControls) adminControls.classList.remove('d-none');
             adminButtons.forEach(el => el.classList.remove('d-none'));
-            this.loginButton.innerHTML = '<i class="bi bi-box-arrow-right"></i> Cerrar Sesión';
-            this.loginButton.setAttribute('data-bs-target', '');
-            this.loginButton.onclick = () => this.logout();
+            if (btnLogin) {
+                btnLogin.innerHTML = '<i class="bi bi-box-arrow-right"></i> Cerrar Sesión';
+                btnLogin.removeAttribute('data-bs-toggle');
+                btnLogin.removeAttribute('data-bs-target');
+                btnLogin.onclick = (e) => {
+                    e.preventDefault();
+                    this.logout();
+                };
+            }
         } else {
-            adminControls.classList.add('d-none');
+            if (adminControls) adminControls.classList.add('d-none');
             adminButtons.forEach(el => el.classList.add('d-none'));
-            this.loginButton.innerHTML = '<i class="bi bi-person"></i> Iniciar Sesión';
-            this.loginButton.setAttribute('data-bs-target', '#loginModal');
-            this.loginButton.onclick = null;
+            if (btnLogin) {
+                btnLogin.innerHTML = '<i class="bi bi-person"></i> Iniciar Sesión';
+                btnLogin.setAttribute('data-bs-toggle', 'modal');
+                btnLogin.setAttribute('data-bs-target', '#loginModal');
+                btnLogin.onclick = null;
+            }
         }
     },
 
@@ -159,7 +171,7 @@ const InvestigadoresApp = {
 
         // Crear objeto de errores
         const errores = [];
-        
+
         if (!nombre || nombre.trim() === '') {
             errores.push('El nombre es obligatorio');
         } else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(nombre)) {
@@ -254,24 +266,86 @@ const InvestigadoresApp = {
         this.loadInvestigadores();
     },
 
-    // Editar investigador
-    editarInvestigador(id) {
+    // Ver investigador (Nuevo Diseño)
+    verInvestigador(id) {
         const investigadores = JSON.parse(localStorage.getItem('investigadores') || '[]');
-        const investigador = investigadores.find(i => i.id === id);
-        
+        const investigador = investigadores.find(i => i.id == id);
+        if (!investigador) return;
+
+        const modalHtml = `
+            <div class="modal fade" id="perfilModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 overflow-hidden">
+                        <div class="modal-header border-0 p-0 position-relative" style="height: 150px; background-color: #fceda4;"> <!-- Banner Amarillo -->
+                            <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
+                            <div class="position-absolute top-50 start-50 translate-middle" style="width: 100%; text-align: center;">
+                                <!-- Optional: Icon form background pattern could go here -->
+                            </div>
+                        </div>
+                        <div class="modal-body text-center pt-0 position-relative">
+                            <div class="position-absolute start-50 translate-middle-x" style="top: -60px;">
+                                <img src="${investigador.foto}" 
+                                     class="rounded-circle border border-4 border-white shadow" 
+                                     alt="${investigador.nombre}"
+                                     style="width: 120px; height: 120px; object-fit: cover; background-color: white;">
+                            </div>
+                            
+                            <div style="margin-top: 70px;">
+                                <h3 class="fw-bold mb-1">${investigador.nombre}</h3>
+                                <p class="text-muted mb-3">${investigador.area}</p>
+                                
+                                <div class="card bg-light border-0 p-3 mb-3">
+                                    <div class="d-flex align-items-center justify-content-center gap-2 text-primary">
+                                        <i class="bi bi-envelope-fill"></i>
+                                        <span class="text-dark">${investigador.correo}</span>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary rounded-pill" data-bs-dismiss="modal">
+                                        <i class="bi bi-hand-thumbs-up"></i> Contactar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const oldModal = document.getElementById('perfilModal');
+        if (oldModal) oldModal.remove();
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        new bootstrap.Modal(document.getElementById('perfilModal')).show();
+    },
+
+    // Editar o Ver investigador
+    editarInvestigador(id, isViewMode = false) {
+        if (isViewMode) {
+            this.verInvestigador(id);
+            return;
+        }
+
+        const investigadores = JSON.parse(localStorage.getItem('investigadores') || '[]');
+        const investigador = investigadores.find(i => i.id == id);
+
         if (investigador) {
             this.currentEditId = id;
             document.getElementById('nombreInvestigador').value = investigador.nombre;
             document.getElementById('correoInvestigador').value = investigador.correo;
             document.getElementById('areaInvestigador').value = investigador.area;
-            
+
             const previewImagen = document.getElementById('previewImagen');
             previewImagen.src = investigador.foto;
             previewImagen.classList.remove('d-none');
-            
-            document.querySelector('#addInvestigadorModal .modal-title')
-                .textContent = 'Editar Investigador';
-            new bootstrap.Modal(document.getElementById('addInvestigadorModal')).show();
+
+            document.querySelector('#addInvestigadorModal .modal-title').textContent = 'Editar Investigador';
+
+            const modalElement = document.getElementById('addInvestigadorModal');
+            new bootstrap.Modal(modalElement).show();
+
+            // Note: Listener de hidden.bs.modal ya limpia el form
         }
     },
 
@@ -301,16 +375,16 @@ const InvestigadoresApp = {
     filterInvestigadores() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const filterArea = document.getElementById('filterSelect').value.toLowerCase();
-        
+
         const cards = document.querySelectorAll('#investigadoresGrid .card');
         cards.forEach(card => {
             const nombre = card.querySelector('.card-title').textContent.toLowerCase();
             const area = card.querySelector('.bi-bookmark').nextSibling.textContent.toLowerCase();
-            
+
             const matchesSearch = nombre.includes(searchTerm);
             const matchesFilter = !filterArea || area.includes(filterArea);
-            
-            card.closest('.col-md-6').style.display = 
+
+            card.closest('.col-md-6').style.display =
                 matchesSearch && matchesFilter ? 'block' : 'none';
         });
     },
@@ -322,7 +396,7 @@ const InvestigadoresApp = {
             e.preventDefault();
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
-            
+
             if (this.login(username, password)) {
                 bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
                 e.target.reset();
@@ -344,7 +418,7 @@ const InvestigadoresApp = {
         // Formulario de investigador
         document.getElementById('investigadorForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             if (!e.target.checkValidity()) {
                 e.target.classList.add('was-validated');
                 return;
