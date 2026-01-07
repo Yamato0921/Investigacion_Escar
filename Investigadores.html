@@ -19,8 +19,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2" href="Index.html">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Escudo_Polic%C3%ADa_Nacional_de_Colombia.svg/1200px-Escudo_Polic%C3%ADa_Nacional_de_Colombia.svg.png"
-                    alt="Logo" width="40" height="40">
+                <img src="./Src/escudo.png" alt="Logo" width="40" height="40">
                 <span class="d-none d-sm-block">ESCAR INVESTIGACIÓN</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -137,6 +136,7 @@
                 </div>
                 <div class="modal-body">
                     <form id="investigadorForm" class="needs-validation" novalidate>
+
                         <div class="mb-3">
                             <label class="form-label">Nombre Completo *</label>
                             <input type="text" class="form-control" id="nombreInvestigador" name="nombre" required
@@ -145,6 +145,58 @@
                                 El nombre es obligatorio y solo debe contener letras
                             </div>
                         </div>
+
+                        <!-- Nuevos Campos -->
+                        <div class="mb-3">
+                            <label class="form-label">Grado Policial *</label>
+                            <select class="form-select" id="gradoInvestigador" name="grado" required>
+                                <option value="">Seleccione un grado</option>
+                                <optgroup label="Nivel Básico y Estudiantes">
+                                    <option value="Estudiante de Policía">Estudiante de Policía</option>
+                                    <option value="Auxiliar de Policía">Auxiliar de Policía</option>
+                                    <option value="Patrullero de Policía">Patrullero de Policía</option>
+                                </optgroup>
+                                <optgroup label="Nivel Ejecutivo">
+                                    <option value="Patrullero">Patrullero</option>
+                                    <option value="Subintendente">Subintendente</option>
+                                    <option value="Intendente">Intendente</option>
+                                    <option value="Intendente Jefe">Intendente Jefe</option>
+                                    <option value="Subcomisario">Subcomisario</option>
+                                    <option value="Comisario">Comisario</option>
+                                </optgroup>
+                                <optgroup label="Oficiales">
+                                    <option value="Subteniente">Subteniente</option>
+                                    <option value="Teniente">Teniente</option>
+                                    <option value="Capitán">Capitán</option>
+                                    <option value="Mayor">Mayor</option>
+                                    <option value="Teniente Coronel">Teniente Coronel</option>
+                                    <option value="Coronel">Coronel</option>
+                                    <option value="Brigadier General">Brigadier General</option>
+                                    <option value="Mayor General">Mayor General</option>
+                                    <option value="General">General</option>
+                                </optgroup>
+                                <optgroup label="Otros">
+                                    <option value="Civil">Personal Civil</option>
+                                    <option value="Otro">Otro</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Profesión <small class="text-muted">(Opcional)</small></label>
+                            <input type="text" class="form-control" id="profesionInvestigador" name="profesion">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono *</label>
+                            <input type="tel" class="form-control" id="telefonoInvestigador" name="telefono" required
+                                pattern="[0-9+ ]{7,15}">
+                            <div class="invalid-feedback">
+                                Ingrese un número válido
+                            </div>
+                        </div>
+                        <!-- Fin Nuevos Campos -->
+
                         <div class="mb-3">
                             <label class="form-label">Correo *</label>
                             <input type="email" class="form-control" id="correoInvestigador" name="correo" required>

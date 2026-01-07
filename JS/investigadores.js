@@ -3,6 +3,9 @@ const investigadoresIniciales = [
     {
         id: 1,
         nombre: "Juan Pérez",
+        grado: "Intendente",
+        profesion: "Ingeniero de Sistemas",
+        telefono: "3001234567",
         correo: "juan.perez@escar.edu.co",
         area: "Tecnología",
         foto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
@@ -15,7 +18,7 @@ const InvestigadoresApp = {
     modalInstance: null,
 
     init() {
-        console.log('InvestigadoresApp Init (Enhanced)');
+        console.log('InvestigadoresApp Init (Refined)');
         this.initializeData();
 
         const modalEl = document.getElementById('addInvestigadorModal');
@@ -23,7 +26,6 @@ const InvestigadoresApp = {
             this.modalInstance = new bootstrap.Modal(modalEl);
         }
 
-        // Inicializar Auth y botones
         if (typeof AuthManager !== 'undefined') {
             AuthManager.init();
         }
@@ -44,7 +46,6 @@ const InvestigadoresApp = {
         const password = document.getElementById('password').value;
 
         if (AuthManager.login(email, password)) {
-            // Cerrar modal si está abierto
             const modalEl = document.getElementById('loginModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();
@@ -81,7 +82,6 @@ const InvestigadoresApp = {
         const grid = document.getElementById('investigadoresGrid');
         if (!grid) return;
 
-        // Asegurar que el grid sea visible
         grid.classList.add('is-visible');
         grid.classList.remove('fade-in-section');
 
@@ -93,6 +93,7 @@ const InvestigadoresApp = {
         }
 
         investigadores.forEach(inv => {
+            // FIX: Grado sobre el Nombre
             const card = `
                 <div class="col-md-6 col-lg-4 mb-4 animate__animated animate__fadeIn">
                     <div class="card h-100 shadow-sm border-0 overflow-hidden hover-card">
@@ -102,8 +103,9 @@ const InvestigadoresApp = {
                                  alt="${inv.nombre}"
                                  style="object-fit: cover; object-position: center 20%;">
                             <div class="overlay position-absolute bottom-0 w-100 p-3 text-white" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
-                                <h5 class="card-title mb-1">${inv.nombre}</h5>
-                                <small><i class="bi bi-bookmark-fill"></i> ${inv.area}</small>
+                                <p class="mb-0 text-warning text-uppercase fw-bold smaller">${inv.grado || 'Investigador'}</p>
+                                <h5 class="card-title mb-1 fw-bold">${inv.nombre}</h5>
+                                <small><i class="bi bi-briefcase"></i> ${inv.profesion || inv.area}</small>
                             </div>
                         </div>
                         <div class="card-body">
@@ -141,7 +143,6 @@ const InvestigadoresApp = {
         } else {
             adminElements.forEach(el => el.classList.add('d-none'));
         }
-
         if (typeof AuthManager !== 'undefined') AuthManager.updateLoginButton();
     },
 
@@ -157,11 +158,17 @@ const InvestigadoresApp = {
         if (modalTitle) modalTitle.textContent = investigador ? 'Editar Investigador' : 'Nuevo Investigador';
 
         const nombreInput = document.getElementById('nombreInvestigador');
+        const gradoInput = document.getElementById('gradoInvestigador');
+        const profesionInput = document.getElementById('profesionInvestigador');
+        const telefonoInput = document.getElementById('telefonoInvestigador');
         const correoInput = document.getElementById('correoInvestigador');
         const areaInput = document.getElementById('areaInvestigador');
         const preview = document.getElementById('previewImagen');
 
         if (nombreInput) nombreInput.value = investigador ? investigador.nombre : '';
+        if (gradoInput) gradoInput.value = investigador ? (investigador.grado || '') : '';
+        if (profesionInput) profesionInput.value = investigador ? (investigador.profesion || '') : '';
+        if (telefonoInput) telefonoInput.value = investigador ? (investigador.telefono || '') : '';
         if (correoInput) correoInput.value = investigador ? investigador.correo : '';
         if (areaInput) areaInput.value = investigador ? investigador.area : '';
 
@@ -180,11 +187,31 @@ const InvestigadoresApp = {
     },
 
     guardarInvestigador() {
-        const nombre = document.getElementById('nombreInvestigador').value;
-        const correo = document.getElementById('correoInvestigador').value;
-        const area = document.getElementById('areaInvestigador').value;
+        // Validar campos obligatorios manualmente para SweetAlert
+        const nombreVal = document.getElementById('nombreInvestigador').value.trim();
+        const gradoVal = document.getElementById('gradoInvestigador').value;
+        const telefonoVal = document.getElementById('telefonoInvestigador').value.trim();
+        const correoVal = document.getElementById('correoInvestigador').value.trim();
+        const areaVal = document.getElementById('areaInvestigador').value;
 
-        if (!nombre || !correo || !area) return;
+        // Profesion es opcional
+        const profesionVal = document.getElementById('profesionInvestigador').value.trim();
+
+        let faltando = [];
+        if (!nombreVal) faltando.push('Nombre Completo');
+        if (!gradoVal) faltando.push('Grado Policial');
+        if (!telefonoVal) faltando.push('Teléfono');
+        if (!correoVal) faltando.push('Correo');
+        if (!areaVal) faltando.push('Área de Investigación');
+
+        if (faltando.length > 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campos Incompletos',
+                text: 'Por favor diligencie los siguientes campos obligatorios: ' + faltando.join(', ')
+            });
+            return;
+        }
 
         const fileInput = document.getElementById('fotoInvestigador');
 
@@ -192,24 +219,35 @@ const InvestigadoresApp = {
         if (this.currentEditId) {
             const actual = JSON.parse(localStorage.getItem('investigadores') || '[]').find(i => i.id == this.currentEditId);
             if (actual) fotoFinal = actual.foto;
+        } else {
+            // Validar Foto Nueva
+            if (!fileInput.files || !fileInput.files[0]) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Foto faltante',
+                    text: 'Debe seleccionar una foto para el nuevo investigador.'
+                });
+                return;
+            }
         }
 
         if (fileInput && fileInput.files && fileInput.files[0]) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                this._guardarData(nombre, correo, area, e.target.result);
+                this._guardarData({ nombre: nombreVal, grado: gradoVal, profesion: profesionVal, telefono: telefonoVal, correo: correoVal, area: areaVal, foto: e.target.result });
             };
             reader.readAsDataURL(fileInput.files[0]);
         } else {
-            this._guardarData(nombre, correo, area, fotoFinal);
+            this._guardarData({ nombre: nombreVal, grado: gradoVal, profesion: profesionVal, telefono: telefonoVal, correo: correoVal, area: areaVal, foto: fotoFinal });
         }
     },
 
-    _guardarData(nombre, correo, area, foto) {
+    _guardarData(data) {
         let investigadores = JSON.parse(localStorage.getItem('investigadores') || '[]');
+
         const nuevo = {
             id: this.currentEditId || Date.now(),
-            nombre, correo, area, foto
+            ...data
         };
 
         if (this.currentEditId) {
@@ -229,7 +267,7 @@ const InvestigadoresApp = {
         const preview = document.getElementById('previewImagen');
         if (preview) preview.classList.add('d-none');
 
-        Swal.fire('Guardado', '', 'success');
+        Swal.fire('Guardado', 'Información del investigador actualizada correctamente.', 'success');
     },
 
     editarInvestigador(id) {
@@ -284,9 +322,19 @@ const InvestigadoresApp = {
                             </div>
                             
                             <div style="margin-top: 70px;">
+                                <div class="badge bg-primary mb-2">${investigador.grado || 'Investigador'}</div>
                                 <h3 class="fw-bold mb-1">${investigador.nombre}</h3>
+                                ${investigador.profesion ? `<p class="text-muted fw-bold mb-1">${investigador.profesion}</p>` : ''}
                                 <p class="text-muted mb-3">${investigador.area}</p>
-                                <p class="text-primary"><i class="bi bi-envelope-fill me-2"></i>${investigador.correo}</p>
+                                
+                                <div class="row justify-content-center g-2 mt-3">
+                                    <div class="col-auto">
+                                         <p class="text-primary mb-0"><i class="bi bi-envelope-fill me-2"></i>${investigador.correo}</p>
+                                    </div>
+                                    <div class="col-auto">
+                                         <p class="text-secondary mb-0"><i class="bi bi-telephone-fill me-2"></i>${investigador.telefono || 'Sin teléfono'}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
