@@ -104,52 +104,40 @@ class GruposApp {
                     descripcion: "Investigación aplicada en técnicas de defensa y análisis forense digital.",
                     email: "ciberseguridad@escar.edu.co",
                     logo: "https://cdn-icons-png.flaticon.com/512/2716/2716612.png"
-                },
-                {
-                    id: 2,
-                    nombre: "Grupo de Innovación Policial",
-                    lineaInvestigacion: "Gestión Policial y Seguridad Ciudadana",
-                    lider: "Capitán Laura Ramírez",
-                    descripcion: "Desarrollo de nuevas estrategias para la seguridad ciudadana y convivencia.",
-                    email: "innovacion@escar.edu.co",
-                    logo: "https://cdn-icons-png.flaticon.com/512/1006/1006555.png"
+        document.querySelectorAll('.admin-controls').forEach(el => {
+                        el.classList.toggle('d-none', !isAdmin);
+                    });
                 }
-            ];
-            localStorage.setItem('grupos', JSON.stringify(grupos));
-        }
 
-        this.gruposOriginales = grupos;
-        this.renderUI(grupos);
+    static async loadGroups() {
+                    try {
+                        const response = await fetch(`${API_URL}?action=list_grupos`); // Assuming endpoint exists
+                        if(!response.ok) throw new Error("Offline");
+                        const data = await response.json();
+                        if(data.success) {
+                    this.groups = data.data;
+                }
+        } catch (error) {
+            console.warn('Modo Offline: Cargando grupos locales');
+            const stored = localStorage.getItem('grupos_data');
+            this.groups = stored ? JSON.parse(stored) : [];
+        }
+        this.renderGroups(this.groups);
     }
 
-    static renderUI(grupos) {
-        const grid = document.getElementById('gruposGrid');
-        grid.innerHTML = '';
+    static renderGroups(groups) {
+        const container = document.getElementById('gruposGrid'); // Ensure ID matches HTML
+        if (!container) return;
 
-        grupos.forEach(grupo => {
+        container.innerHTML = '';
+        if (!groups.length) {
+            container.innerHTML = '<div class="col-12 text-center text-muted"><h3>No hay grupos registrados</h3></div>';
+            return;
+        }
+
+        groups.forEach(group => {
+            // Using a design similar to Semilleros or custom for Groups
             const card = `
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100 shadow-sm hover-card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <img src="${grupo.logo}" alt="Logo" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
-                                <div>
-                                    <h5 class="card-title mb-0 text-primary">${grupo.nombre}</h5>
-                                    <small class="text-muted"><i class="bi bi-person-badge"></i> Líder: ${grupo.lider}</small>
-                                </div>
-                            </div>
-                            <h6 class="card-subtitle mb-2 text-muted fw-bold">${grupo.lineaInvestigacion}</h6>
-                            <p class="card-text">${grupo.descripcion}</p>
-                            <div class="mt-3">
-                                <span class="badge bg-secondary"><i class="bi bi-envelope"></i> ${grupo.email}</span>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-transparent border-top-0 pb-3">
-                            <button class="btn btn-outline-primary w-100 mb-2" onclick="GruposApp.verDetalle(${grupo.id})">
-                                <i class="bi bi-eye"></i> Ver Grupo
-                            </button>
-                            <div class="d-flex justify-content-end gap-2 admin-controls ${AuthManager.isAuthenticated() ? '' : 'd-none'}">
-                                <button class="btn btn-warning btn-sm" onclick="GruposApp.editarGrupo(${grupo.id})">
                                     <i class="bi bi-pencil"></i> Editar
                                 </button>
                                 <button class="btn btn-danger btn-sm" onclick="GruposApp.eliminarGrupo(${grupo.id})">

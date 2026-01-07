@@ -30,21 +30,37 @@ function animateValue(id, start, end, duration) {
   }, safeStepTime);
 }
 
-function updateStatistics() {
-  // 1. Grupos de Investigación
-  const grupos = JSON.parse(localStorage.getItem('grupos') || '[]');
-  const countGrupos = grupos.length;
-  animateValue("stats-grupos", 0, countGrupos, 2000);
+const API_URL_STATS = 'http://localhost/Investigacion_Escar/php/api.php';
 
-  // 2. Investigadores Activos
-  const investigadores = JSON.parse(localStorage.getItem('investigadores') || '[]');
-  const countInvestigadores = investigadores.length;
-  animateValue("stats-investigadores", 0, countInvestigadores, 2000);
+async function updateStatistics() {
+  try {
+    // 1. Proyectos (antes Grupos)
+    fetch(`${API_URL_STATS}?action=list_proyectos`)
+      .then(res => res.json())
+      .then(data => {
+        const count = data.success ? data.data.length : 0;
+        animateValue("stats-grupos", 0, count, 2000);
+      });
 
-  // 3. Semilleros
-  const semilleros = JSON.parse(localStorage.getItem('semilleros') || '[]');
-  const countSemilleros = semilleros.length;
-  animateValue("stats-semilleros", 0, countSemilleros, 2000);
+    // 2. Investigadores
+    fetch(`${API_URL_STATS}?action=list`)
+      .then(res => res.json())
+      .then(data => {
+        const count = data.success ? data.data.length : 0;
+        animateValue("stats-investigadores", 0, count, 2000);
+      });
+
+    // 3. Semilleros
+    fetch(`${API_URL_STATS}?action=list_semilleros`)
+      .then(res => res.json())
+      .then(data => {
+        const count = data.success ? data.data.length : 0;
+        animateValue("stats-semilleros", 0, count, 2000);
+      });
+
+  } catch (error) {
+    console.error('Error loading stats:', error);
+  }
 }
 
 // Scroll Animations & Back to Top

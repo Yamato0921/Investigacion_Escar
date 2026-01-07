@@ -4,22 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semilleros de Investigación</title>
+    <title>Semilleros - Escuela Nacional de Carabineros</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Animate CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <link rel="stylesheet" href="CSS/Styles.css">
 </head>
 
 <body>
-
-    <!-- Menú de navegación con iconos -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="Index.html">
-                <img src="https://www.policia.gov.co/sites/default/files/2024-02/Escudo9_0.jpg?fid=400799" alt="Logo"
-                    height="40" class="me-2">
-                ESCAR
+            <a class="navbar-brand d-flex align-items-center gap-2" href="Index.html">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Escudo_Polic%C3%ADa_Nacional_de_Colombia.svg/1200px-Escudo_Polic%C3%ADa_Nacional_de_Colombia.svg.png"
+                    alt="Logo" width="40" height="40">
+                <span class="d-none d-sm-block">ESCAR INVESTIGACIÓN</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -27,28 +29,25 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="Index.html">
-                            <i class="bi bi-house-door"></i> Home
-                        </a>
+                        <a class="nav-link" href="Index.html">Inicio</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="Investigadores.html">
-                            <i class="bi bi-people"></i> Investigadores
-                        </a>
+                        <a class="nav-link" href="Investigadores.html">Investigadores</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="Grupos-Inovacion.html">
-                            <i class="bi bi-grid-3x3-gap"></i> Grupos
-                        </a>
+                        <a class="nav-link active" href="Semilleros.html">Semilleros</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="Semilleros.html">
-                            <i class="bi bi-book"></i> Semilleros
-                        </a>
+                        <a class="nav-link" href="Proyectos.html">Proyectos</a>
                     </li>
                     <li class="nav-item">
-                        <button id="btnLogin" class="btn btn-outline-light ms-2">
-                            <i class="bi bi-person"></i> INICIAR SESIÓN
+                        <a class="nav-link" href="Convocatorias.html">Convocatorias</a>
+                    </li>
+                    <li class="nav-item" id="loginContainer">
+                        <button class="btn btn-outline-light ms-lg-3 mt-2 mt-lg-0 rounded-pill btn-nav-custom"
+                            onclick="document.getElementById('loginModal').style.display='block'" data-bs-toggle="modal"
+                            data-bs-target="#loginModal">
+                            <i class="bi bi-person-circle me-2"></i>Acceso Admin
                         </button>
                     </li>
                 </ul>
@@ -56,202 +55,65 @@
         </div>
     </nav>
 
-    <!-- Modal Agregar/Editar Investigador -->
-    <div class="modal fade" id="addInvestigadorModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Agregar Investigador</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="investigadorForm">
-                        <div class="mb-3">
-                            <label class="form-label">Nombre Completo</label>
-                            <input type="text" class="form-control" id="nombreInvestigador" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Correo</label>
-                            <input type="email" class="form-control" id="correoInvestigador" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Área de Investigación</label>
-                            <select class="form-select" id="areaInvestigador" required>
-                                <option value="tecnologia">Tecnología</option>
-                                <option value="ciencias">Ciencias</option>
-                                <option value="humanidades">Humanidades</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Foto</label>
-                            <input type="file" class="form-control mb-2" id="fotoInvestigador" accept="image/*">
-                            <div class="text-center">
-                                <img id="previewImagen" src="" alt="Vista previa" class="d-none rounded-3 shadow-sm"
-                                    style="max-width: 200px; max-height: 200px; object-fit: cover;">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Guardar</button>
-                    </form>
-                </div>
-            </div>
+    <!-- Header Section -->
+    <header
+        class="position-relative hero-section d-flex align-items-center justify-content-center overflow-hidden bg-dark text-white text-center"
+        style="margin-top: 76px;">
+        <div class="position-absolute w-100 h-100 hero-bg-image"
+            style="background: url('https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;">
         </div>
-    </div>
+        <div class="position-relative z-1 container px-4 animate__animated animate__fadeInDown">
+            <h1 class="display-3 fw-bold mb-3">Semilleros de Investigación</h1>
+            <p class="lead mb-0 text-white-50">Espacios de formación donde el conocimiento florece y la innovación
+                comienza</p>
+        </div>
+    </header>
 
-    <div class="container mt-4">
-        <!-- Banner/Header -->
-        <div
-            class="position-relative overflow-hidden bg-dark text-white mb-5 rounded animate__animated animate__fadeIn">
-            <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
-                class="position-absolute w-100 h-100 object-fit-cover opacity-50" alt="Banner Semilleros">
-            <div class="position-relative p-5 text-center">
-                <h1 class="display-4 fw-bold">Semilleros de Investigación</h1>
-                <p class="lead">Formación y experimentación científica</p>
-            </div>
+    <!-- Main Content -->
+    <main class="container pt-1 pb-5">
+        <!-- Add Button (Admin Only) -->
+        <div id="adminControls" class="d-none text-end mb-3 mt-3 animate__animated animate__fadeIn">
+            <button class="btn btn-primary btn-lg rounded-pill shadow-sm" onclick="SemillerosApp.mostrarFormulario()">
+                <i class="bi bi-plus-circle me-2"></i>Nuevo Semillero
+            </button>
         </div>
 
-        <!-- Área de búsqueda y filtrado -->
-        <div class="row g-3 mb-4 align-items-center animate__animated animate__fadeInUp">
-            <div class="col-md-4">
-                <div class="form-floating">
-                    <select class="form-select" id="searchFilter">
-                        <option value="nombre">Nombre del Semillero</option>
-                        <option value="codigo">Código</option>
-                        <option value="responsable">Responsable</option>
-                        <option value="unidadAcademica">Unidad Académica</option>
-                    </select>
-                    <label for="searchFilter">Seleccione el filtro</label>
+        <!-- Search and Filter Section -->
+        <div class="row mb-4 justify-content-center">
+            <div class="col-md-8">
+
+
+                <!-- Semilleros Grid -->
+                <div id="semillerosGrid" class="row g-4">
+                    <!-- Los semilleros se cargarán dinámicamente -->
                 </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-floating">
-                    <input type="text" class="form-control" id="searchValue" placeholder="Valor a buscar">
-                    <label for="searchValue">Contiene el texto</label>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100 h-100 shadow-sm" onclick="SemillerosApp.buscarSemilleros()">
-                    <i class="bi bi-search"></i> Buscar
-                </button>
-            </div>
-            <div class="col-12 text-center admin-controls d-none">
-                <button class="btn btn-success shadow-sm" onclick="SemillerosApp.mostrarFormulario()">
-                    <i class="bi bi-plus-circle"></i> Nuevo Semillero
-                </button>
-            </div>
-        </div>
+    </main>
 
-        <!-- Grid de semilleros -->
-        <div class="row" id="semillerosGrid"></div>
-
-        <!-- Modal para crear/editar semillero -->
-        <div class="modal fade" id="semilleroModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="modalTitle">Postulación a Semillero de Investigación</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="semilleroForm" class="row g-3">
-                            <input type="hidden" id="semilleroId">
-
-                            <div class="col-md-12">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="nombre" required>
-                                    <label for="nombre">Nombre del Semillero</label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="codigo" required>
-                                    <label for="codigo">Código del Semillero</label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="responsable" required>
-                                    <label for="responsable">Responsable del Semillero</label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-12">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="unidadAcademica" required>
-                                    <label for="unidadAcademica">Unidad Académica Responsable</label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="acronimo" required>
-                                    <label for="acronimo">Acrónimo</label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="date" class="form-control" id="fechaCreacion" required>
-                                    <label for="fechaCreacion">Fecha de Creación</label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-12">
-                                <div class="form-floating">
-                                    <input type="url" class="form-control" id="logo" required>
-                                    <label for="logo">URL del Logo</label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-12">
-                                <div class="form-floating">
-                                    <select class="form-select" id="estado" required>
-                                        <option value="ACTIVO">Activo</option>
-                                        <option value="INACTIVO">Inactivo</option>
-                                    </select>
-                                    <label for="estado">Estado</label>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-primary" onclick="SemillerosApp.guardarSemillero()">
-                            <i class="bi bi-save"></i> Guardar Semillero
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Inicio de Sesión -->
+    <!-- Modal Login -->
     <div class="modal fade" id="loginModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Iniciar Sesión</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 overflow-hidden">
+                <div class="modal-header bg-primary text-white border-0 py-4 justify-content-center">
+                    <h5 class="modal-title fs-4 fw-bold"> <i class="bi bi-shield-lock me-2"></i>Acceso Administrativo
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white position-absolute end-0 top-0 m-3"
+                        data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <form id="loginForm" onsubmit="SemillerosApp.iniciarSesion(event)">
-                        <div class="mb-3">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="loginEmail" required>
-                                <label for="loginEmail">Correo Institucional / Usuario</label>
-                            </div>
+                <div class="modal-body p-5">
+                    <form id="loginForm">
+                        <div class="form-floating mb-4">
+                            <input type="text" class="form-control rounded-3" id="username" placeholder="Usuario"
+                                required>
+                            <label for="username"><i class="bi bi-person me-2"></i>Usuario</label>
                         </div>
-                        <div class="mb-3">
-                            <div class="form-floating">
-                                <input type="password" class="form-control" id="loginPassword" required>
-                                <label for="loginPassword">Contraseña</label>
-                            </div>
+                        <div class="form-floating mb-4">
+                            <input type="password" class="form-control rounded-3" id="password" placeholder="Contraseña"
+                                required>
+                            <label for="password"><i class="bi bi-key me-2"></i>Contraseña</label>
                         </div>
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
-                            </button>
+                            <button type="submit"
+                                class="btn btn-primary btn-lg rounded-pill shadow-sm">Ingresar</button>
                         </div>
                     </form>
                 </div>
@@ -259,6 +121,7 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="JS/auth.js"></script>

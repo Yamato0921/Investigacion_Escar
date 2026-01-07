@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convocatorias - Escuela Nacional de Carabineros</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Animate CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="CSS/Styles.css">
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="Index.html">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Escudo_Polic%C3%ADa_Nacional_de_Colombia.svg/1200px-Escudo_Polic%C3%ADa_Nacional_de_Colombia.svg.png"
+                    alt="Logo" width="40" height="40">
+                <span class="d-none d-sm-block">ESCAR INVESTIGACIÓN</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="Index.html">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="Investigadores.html">Investigadores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="Semilleros.html">Semilleros</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="Proyectos.html">Proyectos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="Convocatorias.html">Convocatorias</a>
+                    </li>
+                    <li class="nav-item" id="loginContainer">
+                        <button class="btn btn-outline-light ms-lg-3 mt-2 mt-lg-0 rounded-pill btn-nav-custom"
+                            onclick="document.getElementById('loginModal').style.display='block'" data-bs-toggle="modal"
+                            data-bs-target="#loginModal">
+                            <i class="bi bi-person-circle me-2"></i>Log In
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Section -->
+    <header
+        class="position-relative hero-section d-flex align-items-center justify-content-center overflow-hidden bg-dark text-white text-center"
+        style="margin-top: 76px;">
+        <div class="position-absolute w-100 h-100 hero-bg-image"
+            style="background: url('https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;">
+        </div>
+        <div class="position-relative z-1 container px-4 animate__animated animate__fadeInDown">
+            <h1 class="display-3 fw-bold mb-3">Convocatorias Abiertas</h1>
+            <p class="lead mb-0 text-white-50">Oportunidades para innovar e impactar</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container py-5">
+
+        <div class="row g-4 fade-in-section">
+            <div class="col-12 text-center mb-5">
+                <span class="badge bg-primary mb-2">2026</span>
+                <h2 class="text-primary fw-bold">Convocatorias Vigentes</h2>
+                <p class="text-muted">Aplica a las siguientes oportunidades de financiación y apoyo.</p>
+            </div>
+
+            <!-- Example Convocatoria Card -->
+            <div class="col-lg-12">
+                <div class="card shadow-sm border-0 overflow-hidden hover-card">
+                    <div class="row g-0">
+                        <div class="col-md-4 position-relative">
+                            <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2070&auto=format&fit=crop"
+                                class="img-fluid h-100 object-fit-cover" alt="Convocatoria">
+                            <div
+                                class="position-absolute top-0 start-0 bg-success text-white px-3 py-1 m-3 rounded-pill fw-bold small">
+                                ABIERTA
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body p-4 p-lg-5">
+                                <h3 class="card-title h4 text-primary">Convocatoria de Innovación Tecnológica 2026-I
+                                </h3>
+                                <p class="text-muted mb-3"><i class="bi bi-calendar-event me-2"></i>Fecha Límite: 30 de
+                                    Marzo, 2026</p>
+                                <p class="card-text mb-4">
+                                    Buscamos proyectos que integren nuevas tecnologías para mejorar la seguridad
+                                    ciudadana. Financiamiento de hasta 50 millones de pesos para prototipos funcionales.
+                                </p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary rounded-pill px-4">Ver Términos</button>
+                                    <button class="btn btn-outline-primary rounded-pill px-4">Aplicar Ahora</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example Convocatoria Card 2 -->
+            <div class="col-lg-12">
+                <div class="card shadow-sm border-0 overflow-hidden hover-card">
+                    <div class="row g-0">
+                        <div class="col-md-4 position-relative">
+                            <img src="https://images.unsplash.com/photo-1577495508048-b635879837f1?q=80&w=2069&auto=format&fit=crop"
+                                class="img-fluid h-100 object-fit-cover" alt="Convocatoria">
+                            <div
+                                class="position-absolute top-0 start-0 bg-secondary text-white px-3 py-1 m-3 rounded-pill fw-bold small">
+                                CERRADA
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body p-4 p-lg-5">
+                                <h3 class="card-title h4 text-primary text-opacity-75">Semilleros de Investigación -
+                                    Grupos Focales</h3>
+                                <p class="text-muted mb-3"><i class="bi bi-calendar-event me-2"></i>Fecha Límite: 15 de
+                                    Enero, 2026</p>
+                                <p class="card-text mb-4">
+                                    Convocatoria para la conformación de nuevos semilleros enfocados en análisis
+                                    criminal y prevención del delito.
+                                </p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary rounded-pill px-4 disabled">Resultados
+                                        Publicados</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Login -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 overflow-hidden">
+                <div class="modal-header bg-primary text-white border-0 py-4 justify-content-center">
+                    <h5 class="modal-title fs-4 fw-bold"> <i class="bi bi-shield-lock me-2"></i>Acceso Administrativo
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white position-absolute end-0 top-0 m-3"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-5">
+                    <form id="loginForm">
+                        <div class="form-floating mb-4">
+                            <input type="text" class="form-control rounded-3" id="username" placeholder="Usuario"
+                                required>
+                            <label for="username"><i class="bi bi-person me-2"></i>Usuario</label>
+                        </div>
+                        <div class="form-floating mb-4">
+                            <input type="password" class="form-control rounded-3" id="password" placeholder="Contraseña"
+                                required>
+                            <label for="password"><i class="bi bi-key me-2"></i>Contraseña</label>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit"
+                                class="btn btn-primary btn-lg rounded-pill shadow-sm">Ingresar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="JS/auth.js"></script>
+    <script src="JS/convocatorias.js"></script>
+</body>
+
+</html>

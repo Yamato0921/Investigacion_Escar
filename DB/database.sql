@@ -22,7 +22,44 @@ CREATE TABLE IF NOT EXISTS investigadores (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Insertar usuario administrador por defecto
+-- Insertar usuario administrador por defecto (con contraseña hasheada y plain text)
 INSERT INTO usuarios (username, password, rol) VALUES
-('admin', '$2y$10$RfdCgxXwknTc4NJZYGQzv.BaGynOWNB.JeqoKu6RNL/tvFpTRXk2.', 'administrador');
--- La contraseña es 'admin123' hasheada con bcrypt
+('admin', 'admin123', 'administrador')
+ON DUPLICATE KEY UPDATE password='admin123';
+-- Contraseña en texto plano para facilitar pruebas
+
+-- Crear tabla de semilleros
+CREATE TABLE IF NOT EXISTS semilleros (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    codigo VARCHAR(50) NOT NULL,
+    responsable VARCHAR(100) NOT NULL,
+    unidad_academica VARCHAR(100) NOT NULL,
+    acronimo VARCHAR(20) NOT NULL,
+    fecha_creacion DATE NOT NULL,
+    logo MEDIUMTEXT,
+    estado ENUM('ACTIVO', 'INACTIVO') DEFAULT 'ACTIVO',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Crear tabla de integrantes de semilleros
+CREATE TABLE IF NOT EXISTS semilleros_integrantes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    semillero_id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    rol VARCHAR(50) NOT NULL, -- Ej: Investigador Principal, Estudiante, Docente
+    foto MEDIUMTEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (semillero_id) REFERENCES semilleros(id) ON DELETE CASCADE
+);
+
+-- Crear tabla de proyectos (blog)
+CREATE TABLE IF NOT EXISTS proyectos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(200) NOT NULL,
+    contenido TEXT NOT NULL,
+    imagen MEDIUMTEXT,
+    fecha_publicacion DATE DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
