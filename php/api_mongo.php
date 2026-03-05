@@ -1,16 +1,20 @@
 <?php
-require_once __DIR__ . '/bootstrap.php';
-
-// Debugging for Render
+// Temporarily enable errors for debugging Render deployment
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+if (!extension_loaded('mongodb')) {
+    die(json_encode(['success' => false, 'message' => 'Error: La extensión de PHP "mongodb" no está cargada en el servidor. Revisa el Dockerfile y los logs de Render.']));
+}
+
+require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/jwt_auth.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/logger.php';
 require_once __DIR__ . '/helpers.php';
 
 use MongoDB\BSON\ObjectId;
+use MongoDB\BSON\UTCDateTime;
 
 header('Content-Type: application/json');
 
@@ -64,7 +68,7 @@ switch ($action) {
                 'username' => 'admin',
                 'password' => password_hash('admin123', PASSWORD_BCRYPT),
                 'rol' => 'admin',
-                'created_at' => new MongoDB\BSON\UTCDateTime()
+                'created_at' => new UTCDateTime()
             ]);
             echo json_encode(['success' => true, 'message' => 'Admin creado exitosamente (admin/admin123)']);
         } catch (Exception $e) {
