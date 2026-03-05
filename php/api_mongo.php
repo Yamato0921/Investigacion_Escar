@@ -30,7 +30,8 @@ if (!$mongo) {
     echo json_encode(['success' => false, 'message' => "Error de Conexión: $msg"]);
     exit();
 }
-$dbName = $_ENV['MONGO_DB'] ?? getenv('MONGO_DB') ?: 'ESCAR_AINVEST';
+$uri = getenv('MONGO_URI') ?: ($_ENV['MONGO_URI'] ?? null); // Added this line
+$dbName = getenv('MONGO_DB') ?: ($_ENV['MONGO_DB'] ?? 'ESCAR_AINVEST');
 $db = $mongo->selectDatabase($dbName);
 
 // Auth Helpers

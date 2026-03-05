@@ -6,7 +6,7 @@ use MongoDB\Client;
 
 function create_mongo_client_with_retry(array $opts = [])
 {
-    $uri = $_ENV['MONGO_URI'] ?? getenv('MONGO_URI');
+    $uri = getenv('MONGO_URI') ?: ($_ENV['MONGO_URI'] ?? null);
     if (!$uri) {
         throw new InvalidArgumentException('MONGO_URI is required in environment');
     }
