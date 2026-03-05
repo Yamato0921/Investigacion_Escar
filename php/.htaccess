@@ -1,0 +1,14 @@
+# Proteger archivos sensibles desde acceso público
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Denegar listado de directorios
+    Options -Indexes
+</IfModule>
+
+<FilesMatch "\.(env|log|sqlite|db)$">
+    Require all denied
+</FilesMatch>
+
+<Directory "php/uploads">
+    Require all granted
+</Directory>
