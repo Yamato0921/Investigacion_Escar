@@ -17,8 +17,9 @@ function create_mongo_client_with_retry(array $opts = [])
     for ($i = 1; $i <= $attempts; $i++) {
         try {
             $client = new Client($uri);
-            // ping
-            $client->selectDatabase(getenv('MONGO_DB') ?: 'admin')->command(['ping' => 1]);
+            // ping to verify connection
+            $dbName = $_ENV['MONGO_DB'] ?? getenv('MONGO_DB') ?: 'ESCAR_AINVEST';
+            $client->selectDatabase($dbName)->command(['ping' => 1]);
             return $client;
         } catch (Throwable $e) {
             error_log("[mongo_helper] attempt {$i}/{$attempts} failed: " . $e->getMessage());

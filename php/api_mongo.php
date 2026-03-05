@@ -22,7 +22,8 @@ if (!$mongo) {
     echo json_encode(['success' => false, 'message' => 'MongoDB no está configurado']);
     exit();
 }
-$db = $mongo->selectDatabase($_ENV['MONGO_DB'] ?? getenv('MONGO_DB') ?: 'escar_db');
+$dbName = $_ENV['MONGO_DB'] ?? getenv('MONGO_DB') ?: 'ESCAR_AINVEST';
+$db = $mongo->selectDatabase($dbName);
 
 // Helpers
 function require_auth(): array
