@@ -34,27 +34,27 @@ const API_URL_STATS = 'php/api_mongo.php';
 
 async function updateStatistics() {
   try {
-    // 1. Proyectos (antes Grupos)
-    fetch(`${API_URL_STATS}?action=list_proyectos`)
+    // 1. Proyectos
+    fetch(`${API_URL_STATS}?action=list&col=proyectos`)
       .then(res => res.json())
       .then(data => {
-        const count = data.success ? data.data.length : 0;
+        const count = data.success && data.data ? data.data.length : 0;
         animateValue("stats-grupos", 0, count, 2000);
       });
 
     // 2. Investigadores
-    fetch(`${API_URL_STATS}?action=list`)
+    fetch(`${API_URL_STATS}?action=list&col=investigadores`)
       .then(res => res.json())
       .then(data => {
-        const count = data.success ? data.data.length : 0;
+        const count = data.success && data.data ? data.data.length : 0;
         animateValue("stats-investigadores", 0, count, 2000);
       });
 
     // 3. Semilleros
-    fetch(`${API_URL_STATS}?action=list_semilleros`)
+    fetch(`${API_URL_STATS}?action=list&col=semilleros`)
       .then(res => res.json())
       .then(data => {
-        const count = data.success ? data.data.length : 0;
+        const count = data.success && data.data ? data.data.length : 0;
         animateValue("stats-semilleros", 0, count, 2000);
       });
 

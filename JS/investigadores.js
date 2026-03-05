@@ -1,38 +1,15 @@
-// Datos iniciales de investigadores (Legacy Fallback)
-const investigadoresIniciales = [
-    {
-        id: 1,
-        nombre: "Juan Pérez",
-        grado: "Intendente",
-        profesion: "Ingeniero de Sistemas",
-        telefono: "3001234567",
-        correo: "juan.perez@escar.edu.co",
-        area: "Tecnología",
-        foto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
-    }
-];
-
 const InvestigadoresApp = {
+    API_URL: 'php/api_mongo.php',
     isAdmin: false,
     currentEditId: null,
     modalInstance: null,
 
     init() {
-        console.log('InvestigadoresApp Init (Refined)');
-        this.initializeData();
+        console.log('InvestigadoresApp Init (API Mode)');
 
         const modalEl = document.getElementById('addInvestigadorModal');
         if (modalEl) {
             this.modalInstance = new bootstrap.Modal(modalEl);
-        }
-
-        if (typeof AuthManager !== 'undefined') {
-            AuthManager.init();
-        }
-
-        const loginForm = document.getElementById('loginForm');
-        if (loginForm) {
-            loginForm.addEventListener('submit', (e) => this.iniciarSesion(e));
         }
 
         this.checkSession();
@@ -40,60 +17,52 @@ const InvestigadoresApp = {
         this.setupEventListeners();
     },
 
-    iniciarSesion(e) {
-        e.preventDefault();
-        const email = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        if (AuthManager.login(email, password)) {
-            const modalEl = document.getElementById('loginModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-
-            Swal.fire({
-                icon: 'success',
-                title: '¡Bienvenido!',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                location.reload();
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Usuario o contraseña incorrectos'
-            });
-        }
+    getAuthHeaders(isFormData = false) {
+        const headers = {};
+        if (!isFormData) headers['Content-Type'] = 'application/json';
+        const token = localStorage.getItem('escar_token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        return headers;
     },
 
-    initializeData() {
-        if (!localStorage.getItem('investigadores')) {
-            localStorage.setItem('investigadores', JSON.stringify(investigadoresIniciales));
-        }
+    async checkSession() {
+        // Aprovechamos que auth.js maneja la sesión básica, 
+        // pero verificamos permisos de admin contra el API si es necesario
+        this.isAdmin = (typeof AuthManager !== 'undefined') ? AuthManager.isAuthenticated() : false;
+        this.updateAdminUI();
     },
 
-    loadInvestigadores() {
-        const investigadores = JSON.parse(localStorage.getItem('investigadores') || '[]');
-        this.renderUI(investigadores);
+    async loadInvestigadores() {
+        const grid = document.getElementById('investigadoresGrid');
+        try {
+            const response = await fetch(`${this.API_URL}?action=list`);
+            const data = await response.json();
+
+            if (data.success) {
+                this.renderUI(data.data);
+            } else {
+                console.error('Error del API:', data.message);
+                this.renderUI([]); // Mostrar vacío si falla
+            }
+        } catch (error) {
+            console.error('Error de conexión:', error);
+            Swal.fire('Error', 'No se pudo conectar con el servidor de base de datos.', 'error');
+        }
     },
 
     renderUI(investigadores) {
         const grid = document.getElementById('investigadoresGrid');
         if (!grid) return;
 
-        grid.classList.add('is-visible');
-        grid.classList.remove('fade-in-section');
-
         grid.innerHTML = '';
 
-        if (investigadores.length === 0) {
-            grid.innerHTML = '<div class="col-12 text-center my-5 animate__animated animate__fadeIn"><h3 class="text-muted">No se encontraron investigadores</h3></div>';
+        if (!investigadores || investigadores.length === 0) {
+            grid.innerHTML = '<div class="col-12 text-center my-5 animate__animated animate__fadeIn"><h3 class="text-muted">No se encontraron investigadores en la base de datos</h3></div>';
             return;
         }
 
         investigadores.forEach(inv => {
-            // FIX: Grado sobre el Nombre
+            const id = inv._id || inv.id; // Soporte para mongo _id
             const card = `
                 <div class="col-md-6 col-lg-4 mb-4 animate__animated animate__fadeIn">
                     <div class="card h-100 shadow-sm border-0 overflow-hidden hover-card">
@@ -109,14 +78,14 @@ const InvestigadoresApp = {
                             </div>
                         </div>
                         <div class="card-body">
-                            <button class="btn btn-outline-primary w-100 mb-2" onclick="InvestigadoresApp.verInvestigador(${inv.id})">
+                            <button class="btn btn-outline-primary w-100 mb-2" onclick="InvestigadoresApp.verInvestigador('${id}')">
                                 <i class="bi bi-person-lines-fill"></i> Ver Perfil
                             </button>
-                            <div class="admin-controls d-none">
-                                <button class="btn btn-warning btn-sm w-100 mb-1" onclick="InvestigadoresApp.editarInvestigador(${inv.id})">
+                            <div class="admin-controls ${this.isAdmin ? '' : 'd-none'}">
+                                <button class="btn btn-warning btn-sm w-100 mb-1" onclick="InvestigadoresApp.editarInvestigador('${id}')">
                                     <i class="bi bi-pencil"></i> Editar
                                 </button>
-                                <button class="btn btn-danger btn-sm w-100" onclick="InvestigadoresApp.eliminarInvestigador(${inv.id})">
+                                <button class="btn btn-danger btn-sm w-100" onclick="InvestigadoresApp.eliminarInvestigador('${id}')">
                                     <i class="bi bi-trash"></i> Eliminar
                                 </button>
                             </div>
@@ -130,223 +99,173 @@ const InvestigadoresApp = {
         this.updateAdminUI();
     },
 
-    checkSession() {
-        this.isAdmin = (typeof AuthManager !== 'undefined') ? AuthManager.isAuthenticated() : false;
-        this.updateAdminUI();
-    },
-
     updateAdminUI() {
         const adminElements = document.querySelectorAll('.admin-controls, #adminControls');
-
-        if (this.isAdmin) {
-            adminElements.forEach(el => el.classList.remove('d-none'));
-        } else {
-            adminElements.forEach(el => el.classList.add('d-none'));
-        }
+        adminElements.forEach(el => {
+            if (this.isAdmin) el.classList.remove('d-none');
+            else el.classList.add('d-none');
+        });
         if (typeof AuthManager !== 'undefined') AuthManager.updateLoginButton();
     },
 
     mostrarFormulario(investigador = null) {
         if (!this.isAdmin) {
-            Swal.fire('Error', 'Acceso denegado', 'error');
+            Swal.fire('Error', 'Acceso denegado. Por favor inicie sesión.', 'error');
             return;
         }
 
-        this.currentEditId = investigador ? investigador.id : null;
+        this.currentEditId = investigador ? (investigador._id || investigador.id) : null;
 
-        const modalTitle = document.getElementById('modalTitle');
-        if (modalTitle) modalTitle.textContent = investigador ? 'Editar Investigador' : 'Nuevo Investigador';
+        document.getElementById('modalTitle').textContent = investigador ? 'Editar Investigador' : 'Nuevo Investigador';
+        document.getElementById('nombreInvestigador').value = investigador ? investigador.nombre : '';
+        document.getElementById('gradoInvestigador').value = investigador ? (investigador.grado || '') : '';
+        document.getElementById('profesionInvestigador').value = investigador ? (investigador.profesion || '') : '';
+        document.getElementById('telefonoInvestigador').value = investigador ? (investigador.telefono || '') : '';
+        document.getElementById('correoInvestigador').value = investigador ? investigador.correo : '';
+        document.getElementById('areaInvestigador').value = investigador ? investigador.area : '';
 
-        const nombreInput = document.getElementById('nombreInvestigador');
-        const gradoInput = document.getElementById('gradoInvestigador');
-        const profesionInput = document.getElementById('profesionInvestigador');
-        const telefonoInput = document.getElementById('telefonoInvestigador');
-        const correoInput = document.getElementById('correoInvestigador');
-        const areaInput = document.getElementById('areaInvestigador');
         const preview = document.getElementById('previewImagen');
-
-        if (nombreInput) nombreInput.value = investigador ? investigador.nombre : '';
-        if (gradoInput) gradoInput.value = investigador ? (investigador.grado || '') : '';
-        if (profesionInput) profesionInput.value = investigador ? (investigador.profesion || '') : '';
-        if (telefonoInput) telefonoInput.value = investigador ? (investigador.telefono || '') : '';
-        if (correoInput) correoInput.value = investigador ? investigador.correo : '';
-        if (areaInput) areaInput.value = investigador ? investigador.area : '';
-
         if (preview && investigador?.foto) {
             preview.src = investigador.foto;
             preview.classList.remove('d-none');
         } else if (preview) {
             preview.classList.add('d-none');
-            preview.src = '';
         }
-
-        const fileInput = document.getElementById('fotoInvestigador');
-        if (fileInput) fileInput.value = '';
 
         if (this.modalInstance) this.modalInstance.show();
     },
 
-    guardarInvestigador() {
-        // Validar campos obligatorios manualmente para SweetAlert
-        const nombreVal = document.getElementById('nombreInvestigador').value.trim();
-        const gradoVal = document.getElementById('gradoInvestigador').value;
-        const telefonoVal = document.getElementById('telefonoInvestigador').value.trim();
-        const correoVal = document.getElementById('correoInvestigador').value.trim();
-        const areaVal = document.getElementById('areaInvestigador').value;
-
-        // Profesion es opcional
-        const profesionVal = document.getElementById('profesionInvestigador').value.trim();
-
-        let faltando = [];
-        if (!nombreVal) faltando.push('Nombre Completo');
-        if (!gradoVal) faltando.push('Grado Policial');
-        if (!telefonoVal) faltando.push('Teléfono');
-        if (!correoVal) faltando.push('Correo');
-        if (!areaVal) faltando.push('Área de Investigación');
-
-        if (faltando.length > 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Campos Incompletos',
-                text: 'Por favor diligencie los siguientes campos obligatorios: ' + faltando.join(', ')
-            });
+    async guardarInvestigador() {
+        const form = document.getElementById('investigadorForm');
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
             return;
         }
 
-        const fileInput = document.getElementById('fotoInvestigador');
-
-        let fotoFinal = 'https://via.placeholder.com/300';
+        const formData = new FormData(form);
         if (this.currentEditId) {
-            const actual = JSON.parse(localStorage.getItem('investigadores') || '[]').find(i => i.id == this.currentEditId);
-            if (actual) fotoFinal = actual.foto;
-        } else {
-            // Validar Foto Nueva
-            if (!fileInput.files || !fileInput.files[0]) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Foto faltante',
-                    text: 'Debe seleccionar una foto para el nuevo investigador.'
-                });
-                return;
-            }
+            formData.append('id', this.currentEditId);
         }
 
-        if (fileInput && fileInput.files && fileInput.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this._guardarData({ nombre: nombreVal, grado: gradoVal, profesion: profesionVal, telefono: telefonoVal, correo: correoVal, area: areaVal, foto: e.target.result });
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-        } else {
-            this._guardarData({ nombre: nombreVal, grado: gradoVal, profesion: profesionVal, telefono: telefonoVal, correo: correoVal, area: areaVal, foto: fotoFinal });
-        }
-    },
-
-    _guardarData(data) {
-        let investigadores = JSON.parse(localStorage.getItem('investigadores') || '[]');
-
-        const nuevo = {
-            id: this.currentEditId || Date.now(),
-            ...data
-        };
-
-        if (this.currentEditId) {
-            const idx = investigadores.findIndex(i => i.id == this.currentEditId);
-            if (idx !== -1) investigadores[idx] = nuevo;
-        } else {
-            investigadores.push(nuevo);
-        }
-
-        localStorage.setItem('investigadores', JSON.stringify(investigadores));
-
-        if (this.modalInstance) this.modalInstance.hide();
-        this.loadInvestigadores();
-
-        const form = document.getElementById('investigadorForm');
-        if (form) form.reset();
-        const preview = document.getElementById('previewImagen');
-        if (preview) preview.classList.add('d-none');
-
-        Swal.fire('Guardado', 'Información del investigador actualizada correctamente.', 'success');
-    },
-
-    editarInvestigador(id) {
-        const investigadores = JSON.parse(localStorage.getItem('investigadores') || '[]');
-        const target = investigadores.find(i => i.id == id);
-        if (target) this.mostrarFormulario(target);
-    },
-
-    eliminarInvestigador(id) {
         Swal.fire({
+            title: 'Guardando...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const action = this.currentEditId ? 'update' : 'create';
+            const response = await fetch(`${this.API_URL}?action=${action}`, {
+                method: 'POST',
+                body: formData,
+                headers: this.getAuthHeaders(true)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire('¡Éxito!', 'Los datos se han guardado en MongoDB Atlas.', 'success');
+                if (this.modalInstance) this.modalInstance.hide();
+                await this.loadInvestigadores();
+                form.reset();
+                form.classList.remove('was-validated');
+            } else {
+                throw new Error(data.message || 'Error desconocido al guardar');
+            }
+        } catch (error) {
+            console.error('Error al guardar:', error);
+            Swal.fire('Error', 'No se pudo guardar: ' + error.message, 'error');
+        }
+    },
+
+    async editarInvestigador(id) {
+        try {
+            const response = await fetch(`${this.API_URL}?action=get&id=${id}`);
+            const data = await response.json();
+            if (data.success) {
+                this.mostrarFormulario(data.data);
+            } else {
+                Swal.fire('Error', 'No se pudo cargar la información del investigador.', 'error');
+            }
+        } catch (error) {
+            Swal.fire('Error', 'Error de conexión con el servidor.', 'error');
+        }
+    },
+
+    async eliminarInvestigador(id) {
+        const result = await Swal.fire({
             title: '¿Eliminar investigador?',
-            text: "No se podrá revertir esta acción",
+            text: "Se borrará permanentemente de MongoDB Atlas",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                let investigadores = JSON.parse(localStorage.getItem('investigadores') || '[]');
-                investigadores = investigadores.filter(i => i.id != id);
-                localStorage.setItem('investigadores', JSON.stringify(investigadores));
-                this.loadInvestigadores();
-                Swal.fire(
-                    'Eliminado!',
-                    'El investigador ha sido eliminado.',
-                    'success'
-                );
-            }
         });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`${this.API_URL}?action=delete&id=${id}`, {
+                    method: 'POST', // Usamos POST ya que algunos hostings bloquean DELETE
+                    headers: this.getAuthHeaders(true)
+                });
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire('Eliminado', 'El registro ha sido borrado de la base de datos.', 'success');
+                    await this.loadInvestigadores();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                Swal.fire('Error', 'No se pudo eliminar el registro.', 'error');
+            }
+        }
     },
 
-    verInvestigador(id) {
-        const investigadores = JSON.parse(localStorage.getItem('investigadores') || '[]');
-        const investigador = investigadores.find(i => i.id == id);
-        if (!investigador) return;
+    async verInvestigador(id) {
+        try {
+            const response = await fetch(`${this.API_URL}?action=get&id=${id}`);
+            const data = await response.json();
+            if (!data.success) return;
 
-        const modalHtml = `
-            <div class="modal fade" id="perfilModal" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 overflow-hidden">
-                        <div class="modal-header border-0 p-0 position-relative" style="height: 150px; background-color: #fceda4;">
-                            <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body text-center pt-0 position-relative">
-                            <div class="position-absolute start-50 translate-middle-x" style="top: -60px;">
-                                <img src="${investigador.foto}" 
-                                     class="rounded-circle border border-4 border-white shadow" 
-                                     alt="${investigador.nombre}"
-                                     style="width: 120px; height: 120px; object-fit: cover; background-color: white;">
+            const investigador = data.data;
+            const modalHtml = `
+                <div class="modal fade" id="perfilModal" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 overflow-hidden">
+                            <div class="modal-header border-0 p-0 position-relative" style="height: 150px; background-color: #fceda4;">
+                                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
                             </div>
-                            
-                            <div style="margin-top: 70px;">
-                                <div class="badge bg-primary mb-2">${investigador.grado || 'Investigador'}</div>
-                                <h3 class="fw-bold mb-1">${investigador.nombre}</h3>
-                                ${investigador.profesion ? `<p class="text-muted fw-bold mb-1">${investigador.profesion}</p>` : ''}
-                                <p class="text-muted mb-3">${investigador.area}</p>
-                                
-                                <div class="row justify-content-center g-2 mt-3">
-                                    <div class="col-auto">
-                                         <p class="text-primary mb-0"><i class="bi bi-envelope-fill me-2"></i>${investigador.correo}</p>
-                                    </div>
-                                    <div class="col-auto">
-                                         <p class="text-secondary mb-0"><i class="bi bi-telephone-fill me-2"></i>${investigador.telefono || 'Sin teléfono'}</p>
+                            <div class="modal-body text-center pt-0 position-relative">
+                                <div class="position-absolute start-50 translate-middle-x" style="top: -60px;">
+                                    <img src="${investigador.foto || 'https://via.placeholder.com/300'}" 
+                                         class="rounded-circle border border-4 border-white shadow" 
+                                         alt="${investigador.nombre}"
+                                         style="width: 120px; height: 120px; object-fit: cover; background-color: white;">
+                                </div>
+                                <div style="margin-top: 70px;">
+                                    <div class="badge bg-primary mb-2">${investigador.grado || 'Investigador'}</div>
+                                    <h3 class="fw-bold mb-1">${investigador.nombre}</h3>
+                                    <p class="text-muted fw-bold mb-1">${investigador.profesion || ''}</p>
+                                    <p class="text-muted mb-3">${investigador.area}</p>
+                                    <div class="row justify-content-center g-2 mt-3">
+                                        <div class="col-auto"><p class="text-primary mb-0"><i class="bi bi-envelope-fill me-2"></i>${investigador.correo}</p></div>
+                                        <div class="col-auto"><p class="text-secondary mb-0"><i class="bi bi-telephone-fill me-2"></i>${investigador.telefono || 'Sin teléfono'}</p></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        const oldModal = document.getElementById('perfilModal');
-        if (oldModal) oldModal.remove();
-
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        new bootstrap.Modal(document.getElementById('perfilModal')).show();
+            const oldModal = document.getElementById('perfilModal');
+            if (oldModal) oldModal.remove();
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            new bootstrap.Modal(document.getElementById('perfilModal')).show();
+        } catch (error) {
+            console.error('Error al ver perfil:', error);
+        }
     },
 
     setupEventListeners() {

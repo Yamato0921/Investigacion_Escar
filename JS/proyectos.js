@@ -1,89 +1,48 @@
-class ProyectosApp {
-    static modalInstance = null;
+const ProyectosApp = {
+    API_URL: 'php/api_mongo.php?col=proyectos',
+    modalInstance: null,
+    proyectosData: [],
 
-    static async init() {
-        console.log('ProyectosApp Init (Enhanced)');
+    async init() {
+        console.log('ProyectosApp API Init');
+        if (typeof AuthManager !== 'undefined') AuthManager.init();
 
         const modalEl = document.getElementById('proyectoModal');
-        if (modalEl) {
-            this.modalInstance = new bootstrap.Modal(modalEl);
-        }
+        if (modalEl) this.modalInstance = new bootstrap.Modal(modalEl);
 
-        // Inicializar Auth
-        if (typeof AuthManager !== 'undefined') {
-            AuthManager.init();
-        }
-
-        const loginForm = document.getElementById('loginForm');
-        if (loginForm) {
-            loginForm.addEventListener('submit', (e) => this.iniciarSesion(e));
-        }
-
-        this.actualizarBotonLogin();
-        this.cargarProyectos();
+        await this.cargarProyectos();
         this.updateAdminControls();
         this.setupEventListeners();
-    }
+    },
 
-    static iniciarSesion(e) {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail') ? document.getElementById('loginEmail').value : document.getElementById('username').value;
-        const password = document.getElementById('loginPassword') ? document.getElementById('loginPassword').value : document.getElementById('password').value;
-
-        if (AuthManager.login(email, password)) {
-            const modalEl = document.getElementById('loginModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-
-            Swal.fire({
-                icon: 'success',
-                title: '¡Bienvenido!',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => location.reload());
-        } else {
-            Swal.fire({ icon: 'error', title: 'Error', text: 'Credenciales inválidas' });
-        }
-    }
-
-    static actualizarBotonLogin() {
-        if (typeof AuthManager !== 'undefined') AuthManager.updateLoginButton();
-    }
-
-    static updateAdminControls() {
-        const adminControls = document.querySelectorAll('.admin-controls, #adminControls');
+    updateAdminControls() {
         const isAdmin = typeof AuthManager !== 'undefined' ? AuthManager.isAuthenticated() : false;
-
-        adminControls.forEach(el => {
-            if (isAdmin) {
-                el.classList.remove('d-none');
-            } else {
-                el.classList.add('d-none');
-            }
+        document.querySelectorAll('.admin-controls, #adminControls').forEach(el => {
+            if (isAdmin) el.classList.remove('d-none');
+            else el.classList.add('d-none');
         });
-    }
+    },
 
-    static cargarProyectos() {
-        const proyectos = JSON.parse(localStorage.getItem('proyectos') || '[]');
-        this.renderUI(proyectos);
-    }
+    async cargarProyectos() {
+        try {
+            const resp = await fetch(`${this.API_URL}&action=list`);
+            const data = await resp.json();
+            if (data.success) {
+                this.proyectosData = data.data;
+                this.renderUI(data.data);
+            }
+        } catch (e) { console.error('Error cargando proyectos:', e); }
+    },
 
-    static renderUI(proyectos) {
+    renderUI(proyectos) {
         const grid = document.getElementById('proyectosGrid');
         if (!grid) return;
-
-        // FIX: Asegurar visibilidad
-        grid.classList.add('is-visible');
-        grid.classList.remove('fade-in-section');
-
         grid.innerHTML = '';
 
         if (proyectos.length === 0) {
-            grid.innerHTML = '<div class="col-12 text-center text-muted py-5 animate__animated animate__fadeIn"><h3>No hay proyectos publicados.</h3></div>';
+            grid.innerHTML = '<div class="col-12 text-center py-5 text-muted"><h3>No hay proyectos en Atlas.</h3></div>';
             return;
         }
-
-        proyectos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
         proyectos.forEach(p => {
             const card = `
@@ -92,167 +51,107 @@ class ProyectosApp {
                         <img src="${p.imagen || 'https://via.placeholder.com/400x200'}" class="card-img-top" style="height: 200px; object-fit: cover;">
                         <div class="card-body">
                             <h5 class="card-title fw-bold text-primary">${p.titulo}</h5>
-                            <p class="card-text text-muted text-truncate">${p.descripcion}</p>
+                            <p class="card-text text-muted text-truncate">${p.contenido || p.descripcion || ''}</p>
                         </div>
                         <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-                            <button class="btn btn-outline-primary btn-sm rounded-pill" onclick="ProyectosApp.verDetalle(${p.id})">Leer Más</button>
-                            <small class="text-muted">${p.fecha}</small>
+                            <button class="btn btn-outline-primary btn-sm rounded-pill" onclick="ProyectosApp.verDetalle('${p.id}')">Leer Más</button>
                         </div>
-                        <div class="card-footer bg-light admin-controls d-none">
+                        <div class="card-footer bg-light admin-controls ${typeof AuthManager !== 'undefined' && AuthManager.isAuthenticated() ? '' : 'd-none'}">
                             <div class="d-flex gap-2">
-                                <button class="btn btn-warning btn-sm flex-fill" onclick="ProyectosApp.editarProyecto(${p.id})"><i class="bi bi-pencil"></i></button>
-                                <button class="btn btn-danger btn-sm flex-fill" onclick="ProyectosApp.eliminarProyecto(${p.id})"><i class="bi bi-trash"></i></button>
+                                <button class="btn btn-warning btn-sm flex-fill" onclick="ProyectosApp.editarProyecto('${p.id}')"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-danger btn-sm flex-fill" onclick="ProyectosApp.eliminarProyecto('${p.id}')"><i class="bi bi-trash"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>
-             `;
+            `;
             grid.innerHTML += card;
         });
+    },
 
-        this.updateAdminControls();
-    }
-
-    static mostrarModal(proyecto = null) {
-        if (!AuthManager.isAuthenticated()) {
-            Swal.fire('Error', 'Debe iniciar sesión', 'error');
-            return;
-        }
-
-        document.getElementById('proyectoId').value = proyecto ? proyecto.id : '';
-        document.getElementById('titulo').value = proyecto ? proyecto.titulo : '';
-        document.getElementById('contenido').value = proyecto ? proyecto.descripcion : '';
-
-        document.getElementById('imagen').value = '';
-        document.getElementById('existingImagen').value = proyecto ? proyecto.imagen : '';
-
-        const preview = document.getElementById('imagenPreview');
-        const previewContainer = document.getElementById('previewContainer');
-
-        if (proyecto && proyecto.imagen) {
-            if (preview) preview.src = proyecto.imagen;
-            if (previewContainer) previewContainer.classList.remove('d-none');
-        } else {
-            if (previewContainer) previewContainer.classList.add('d-none');
-        }
-
-        if (this.modalInstance) this.modalInstance.show();
-    }
-
-    static guardarProyecto() {
-        const id = document.getElementById('proyectoId').value;
-        const titulo = document.getElementById('titulo').value;
-        const descripcion = document.getElementById('contenido').value;
-        const imagenInput = document.getElementById('imagen');
-        const existingImagen = document.getElementById('existingImagen').value;
-
-        if (!titulo || !descripcion) {
-            Swal.fire('Error', 'Complete los campos obligatorios', 'warning');
-            return;
-        }
-
-        const procesarGuardado = (imagenUrl) => {
-            const nuevo = {
-                id: id || Date.now(),
-                titulo,
-                imagen: imagenUrl,
-                descripcion,
-                fecha: new Date().toISOString().split('T')[0]
-            };
-
-            let proyectos = JSON.parse(localStorage.getItem('proyectos') || '[]');
-            if (id) {
-                const idx = proyectos.findIndex(p => p.id == id);
-                if (idx !== -1) proyectos[idx] = nuevo;
+    mostrarModal(p = null) {
+        if (this.modalInstance) {
+            document.getElementById('proyectoId').value = p ? p.id : '';
+            document.getElementById('titulo').value = p ? p.titulo : '';
+            document.getElementById('contenido').value = p ? (p.contenido || p.descripcion || '') : '';
+            if (p && p.imagen) {
+                document.getElementById('imagenPreview').src = p.imagen;
+                document.getElementById('previewContainer').classList.remove('d-none');
             } else {
-                proyectos.push(nuevo);
+                document.getElementById('previewContainer').classList.add('d-none');
             }
-
-            localStorage.setItem('proyectos', JSON.stringify(proyectos));
-            if (this.modalInstance) this.modalInstance.hide();
-            this.cargarProyectos();
-            Swal.fire('Guardado', '', 'success');
-        };
-
-        if (imagenInput && imagenInput.files && imagenInput.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => procesarGuardado(e.target.result);
-            reader.readAsDataURL(imagenInput.files[0]);
-        } else {
-            procesarGuardado(existingImagen || 'https://via.placeholder.com/400x200');
+            this.modalInstance.show();
         }
-    }
+    },
 
-    static editarProyecto(id) {
-        const proyectos = JSON.parse(localStorage.getItem('proyectos') || '[]');
-        const p = proyectos.find(x => x.id == id);
-        if (p) this.mostrarModal(p);
-    }
+    async guardarProyecto() {
+        const form = document.getElementById('proyectoForm');
+        const formData = new FormData(form);
+        const action = formData.get('id') ? 'update' : 'create';
 
-    static eliminarProyecto(id) {
-        Swal.fire({
-            title: '¿Eliminar proyecto?',
-            text: "No se podrá revertir esta acción de borrado",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                let proyectos = JSON.parse(localStorage.getItem('proyectos') || '[]');
-                proyectos = proyectos.filter(p => p.id != id);
-                localStorage.setItem('proyectos', JSON.stringify(proyectos));
+        try {
+            const token = localStorage.getItem('escar_token');
+            const resp = await fetch(`${this.API_URL}&action=${action}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.success) {
+                Swal.fire('Guardado', 'Proyecto sincronizado con Atlas.', 'success');
+                this.modalInstance.hide();
                 this.cargarProyectos();
-                Swal.fire(
-                    'Eliminado!',
-                    'El proyecto ha sido eliminado.',
-                    'success'
-                );
             }
-        });
-    }
+        } catch (e) { Swal.fire('Error', 'No se pudo guardar.', 'error'); }
+    },
 
-    static verDetalle(id) {
-        const proyectos = JSON.parse(localStorage.getItem('proyectos') || '[]');
-        const p = proyectos.find(x => x.id == id);
+    verDetalle(id) {
+        const p = this.proyectosData.find(x => x.id == id);
         if (!p) return;
-
         const modalEl = document.getElementById('lecturaModal');
         if (modalEl) {
-            const imgEl = document.getElementById('lecturaImagen');
-            const titEl = document.getElementById('lecturaTitulo');
-            const dateEl = document.getElementById('lecturaFecha');
-            const contEl = document.getElementById('lecturaContenido');
-
-            if (imgEl) imgEl.src = p.imagen;
-            if (titEl) titEl.textContent = p.titulo;
-            if (dateEl) dateEl.textContent = p.fecha;
-            if (contEl) contEl.textContent = p.descripcion;
-
+            document.getElementById('lecturaImagen').src = p.imagen || '';
+            document.getElementById('lecturaTitulo').textContent = p.titulo;
+            document.getElementById('lecturaContenido').textContent = p.contenido || p.descripcion || '';
             new bootstrap.Modal(modalEl).show();
         }
-    }
+    },
 
-    static setupEventListeners() {
-        const imagenInput = document.getElementById('imagen');
-        if (imagenInput) {
-            imagenInput.addEventListener('change', (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = (evt) => {
-                        const img = document.getElementById('imagenPreview');
-                        const cont = document.getElementById('previewContainer');
-                        if (img) img.src = evt.target.result;
-                        if (cont) cont.classList.remove('d-none');
-                    }
-                    reader.readAsDataURL(e.target.files[0]);
-                }
+    editarProyecto(id) {
+        const p = this.proyectosData.find(x => x.id == id);
+        if (p) this.mostrarModal(p);
+    },
+
+    async eliminarProyecto(id) {
+        const res = await Swal.fire({ title: '¿Eliminar?', icon: 'warning', showCancelButton: true });
+        if (res.isConfirmed) {
+            const token = localStorage.getItem('escar_token');
+            await fetch(`${this.API_URL}&action=delete&id=${id}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
             });
+            this.cargarProyectos();
         }
+    },
+
+    setupEventListeners() {
+        const form = document.getElementById('proyectoForm');
+        if (form) form.onsubmit = (e) => { e.preventDefault(); this.guardarProyecto(); };
+
+        const imgInput = document.getElementById('imagen');
+        if (imgInput) imgInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    document.getElementById('imagenPreview').src = evt.target.result;
+                    document.getElementById('previewContainer').classList.remove('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+        };
     }
-}
+};
 
 document.addEventListener('DOMContentLoaded', () => ProyectosApp.init());
 window.ProyectosApp = ProyectosApp;
