@@ -1,13 +1,10 @@
 <?php
-// Temporarily enable errors for debugging Render deployment
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-if (!extension_loaded('mongodb')) {
-    die(json_encode(['success' => false, 'message' => 'Error: La extensión de PHP "mongodb" no está cargada en el servidor. Revisa el Dockerfile y los logs de Render.']));
-}
-
 require_once __DIR__ . '/bootstrap.php';
+
+// Production Error Settings
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 require_once __DIR__ . '/jwt_auth.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/logger.php';
