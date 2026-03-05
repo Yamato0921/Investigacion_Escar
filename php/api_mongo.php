@@ -26,7 +26,8 @@ $colParam = $_GET['col'] ?? ($_POST['col'] ?? 'investigadores');
 $mongo = $GLOBALS['mongoClient'] ?? null;
 if (!$mongo) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'MongoDB no disponible']);
+    $msg = $GLOBALS['mongo_init_error'] ?? 'MongoDB no disponible';
+    echo json_encode(['success' => false, 'message' => "Error de Conexión: $msg"]);
     exit();
 }
 $dbName = $_ENV['MONGO_DB'] ?? getenv('MONGO_DB') ?: 'ESCAR_AINVEST';

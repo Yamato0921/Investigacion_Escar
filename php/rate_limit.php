@@ -1,9 +1,16 @@
 <?php
 // Limitador de tasa simple por IP usando archivo con ventana en segundos
-function rate_limit_check(int $maxRequests = 120, int $windowSeconds = 60): bool {
+function rate_limit_check(int $maxRequests = 120, int $windowSeconds = 60): bool
+{
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $dir = __DIR__ . '/logs/ratelimit';
-    if (!is_dir($dir)) mkdir($dir, 0755, true);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0777, true);
+    }
+    // Fail safe: if we can't write, just skip rate limiting instead of crashing
+    if (!is_dir($dir) || !is_writable($dir))
+        return true;
+
     $file = $dir . '/' . md5($ip) . '.json';
 
     $now = time();
@@ -11,7 +18,8 @@ function rate_limit_check(int $maxRequests = 120, int $windowSeconds = 60): bool
     if (file_exists($file)) {
         $raw = file_get_contents($file);
         $parsed = json_decode($raw, true);
-        if (is_array($parsed)) $data = $parsed;
+        if (is_array($parsed))
+            $data = $parsed;
     }
 
     // Resetear ventana si expiró

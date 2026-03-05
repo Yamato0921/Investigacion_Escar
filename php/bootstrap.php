@@ -31,12 +31,20 @@ require_once __DIR__ . '/config.php';
 if (file_exists(__DIR__ . '/mongo_helper.php')) {
     require_once __DIR__ . '/mongo_helper.php';
     try {
-        if ($_ENV['MONGO_URI'] ?? getenv('MONGO_URI')) {
+        $uri = $_ENV['MONGO_URI'] ?? getenv('MONGO_URI');
+        if ($uri) {
             $GLOBALS['mongoClient'] = create_mongo_client_with_retry();
+        } else {
+            if (ini_get('display_errors')) {
+                $GLOBALS['mongo_init_error'] = "Variable MONGO_URI no definida en el entorno.";
+            }
         }
     } catch (Throwable $e) {
         error_log('[bootstrap] Mongo client init failed: ' . $e->getMessage());
-        $GLOBALS['mongoClient'] = null; // degrade gracefully
+        $GLOBALS['mongoClient'] = null;
+        if (ini_get('display_errors')) {
+            $GLOBALS['mongo_init_error'] = $e->getMessage();
+        }
     }
 }
 

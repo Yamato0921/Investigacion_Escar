@@ -24,8 +24,8 @@ RUN if [ -f "composer.json" ]; then \
     && composer install --no-interaction --optimize-autoloader; \
     fi
 
-# Dar permisos a la carpeta de almacenamiento si existe
-RUN mkdir -p php/storage && chmod -R 777 php/storage
+# Dar permisos a las carpetas de almacenamiento y logs
+RUN mkdir -p php/storage php/logs/ratelimit && chmod -R 777 php/storage php/logs
 
 # Exponer el puerto 80
 EXPOSE 80
