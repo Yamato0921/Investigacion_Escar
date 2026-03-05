@@ -1,0 +1,10 @@
+DirectoryIndex index.html Index.html index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Si el archivo no existe, no hacer nada
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    # Opcional: Redirigir todo a index.html si usas un SPA
+    # RewriteRule . index.html [L]
+</IfModule>
