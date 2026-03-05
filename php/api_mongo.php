@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
+// Temporarily enable errors for debugging Render deployment
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 require_once __DIR__ . '/jwt_auth.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/logger.php';
@@ -119,7 +122,8 @@ if ($method === 'GET' && ($action === 'list' || $action === 'list_investigadores
         $res = array_map(function ($i) {
             $i['id'] = (string) $i['_id'];
             unset($i['_id']);
-            return (array) $i; }, $items);
+            return (array) $i;
+        }, $items);
         echo json_encode(['success' => true, 'data' => $res]);
         exit();
     } catch (Exception $e) {
@@ -244,7 +248,8 @@ if ($action === 'list_proyectos' && $method === 'GET') {
         $res = array_map(function ($i) {
             $i['id'] = (string) $i['_id'];
             unset($i['_id']);
-            return (array) $i; }, $items);
+            return (array) $i;
+        }, $items);
         echo json_encode(['success' => true, 'data' => $res]);
         exit();
     } catch (Exception $e) {
@@ -344,7 +349,8 @@ if ($action === 'list_semilleros' && $method === 'GET') {
         $res = array_map(function ($i) {
             $i['id'] = (string) $i['_id'];
             unset($i['_id']);
-            return (array) $i; }, $items);
+            return (array) $i;
+        }, $items);
         echo json_encode(['success' => true, 'data' => $res]);
         exit();
     } catch (Exception $e) {
@@ -449,7 +455,8 @@ if ($action === 'list_integrantes' && $method === 'GET') {
         $res = array_map(function ($i) {
             $i['id'] = (string) $i['_id'];
             unset($i['_id']);
-            return (array) $i; }, $items);
+            return (array) $i;
+        }, $items);
         echo json_encode(['success' => true, 'data' => $res]);
         exit();
     } catch (Exception $e) {
