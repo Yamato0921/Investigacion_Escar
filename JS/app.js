@@ -1,6 +1,13 @@
 // Namespace global para la aplicación
 const InvestigadoresApp = {
-    API_URL: 'php/api.php',
+    API_URL: 'php/api_mongo.php',
+    getAuthHeaders(isFormData = false) {
+        const headers = {};
+        if (!isFormData) headers['Content-Type'] = 'application/json';
+        const token = localStorage.getItem('escar_token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        return headers;
+    },
     isAdmin: false,
     currentEditId: null,
 
@@ -30,11 +37,12 @@ const InvestigadoresApp = {
     async checkSession() {
         try {
             const response = await fetch(`${this.API_URL}?action=check_session`, {
-                credentials: 'include'
+                headers: this.getAuthHeaders(true)
             });
             const data = await response.json();
             if (data.success) {
-                this.isAdmin = true;
+                localStorage.setItem('escar_token', data.token);
+                    this.isAdmin = true;
                 this.updateAdminUI();
             }
         } catch (error) {
@@ -91,15 +99,13 @@ const InvestigadoresApp = {
             try {
                 const response = await fetch(`${this.API_URL}?action=login`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({ username, password }),
-                    credentials: 'include'
+                    headers: this.getAuthHeaders()
                 });
 
                 const data = await response.json();
                 if (data.success) {
+                    localStorage.setItem('escar_token', data.token);
                     this.isAdmin = true;
                     this.updateAdminUI();
                     bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
@@ -139,7 +145,7 @@ const InvestigadoresApp = {
                 const response = await fetch(`${this.API_URL}?action=${this.currentEditId ? 'update' : 'create'}`, {
                     method: 'POST',
                     body: formData,
-                    credentials: 'include'
+                    headers: this.getAuthHeaders(true)
                 });
 
                 const data = await response.json();
@@ -212,10 +218,11 @@ const InvestigadoresApp = {
         try {
             const response = await fetch(`${this.API_URL}?action=logout`, {
                 method: 'POST',
-                credentials: 'include'
+                headers: this.getAuthHeaders(true)
             });
             const data = await response.json();
             if (data.success) {
+                localStorage.removeItem('escar_token');
                 this.isAdmin = false;
                 this.updateAdminUI();
                 window.location.reload();
@@ -229,7 +236,7 @@ const InvestigadoresApp = {
     async editarInvestigador(id) {
         try {
             const response = await fetch(`${this.API_URL}?action=get&id=${id}`, {
-                credentials: 'include'
+                headers: this.getAuthHeaders(true)
             });
             const data = await response.json();
             if (data.success) {
@@ -271,7 +278,7 @@ const InvestigadoresApp = {
             try {
                 const response = await fetch(`${this.API_URL}?action=delete&id=${id}`, {
                     method: 'DELETE',
-                    credentials: 'include'
+                    headers: this.getAuthHeaders(true)
                 });
                 const data = await response.json();
                 if (data.success) {

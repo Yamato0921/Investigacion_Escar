@@ -30,7 +30,7 @@ function animateValue(id, start, end, duration) {
   }, safeStepTime);
 }
 
-const API_URL_STATS = 'http://localhost/Investigacion_Escar/php/api.php';
+const API_URL_STATS = 'php/api_mongo.php';
 
 async function updateStatistics() {
   try {

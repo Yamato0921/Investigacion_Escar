@@ -6,7 +6,7 @@ class SemilleroManager {
         }
 
         try {
-            const response = await fetch('php/api_new.php', {
+            const response = await fetch(`${InvestigadoresApp.API_URL}?action=create_semillero`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

@@ -3,7 +3,8 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 // Cargar variables de entorno si existen
 if (file_exists(__DIR__ . '/.env')) {
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    // createUnsafeImmutable allows putenv() and getenv() to work
+    $dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
     $dotenv->load();
 }
 
@@ -30,7 +31,7 @@ require_once __DIR__ . '/config.php';
 if (file_exists(__DIR__ . '/mongo_helper.php')) {
     require_once __DIR__ . '/mongo_helper.php';
     try {
-        if (getenv('MONGO_URI')) {
+        if ($_ENV['MONGO_URI'] ?? getenv('MONGO_URI')) {
             $GLOBALS['mongoClient'] = create_mongo_client_with_retry();
         }
     } catch (Throwable $e) {

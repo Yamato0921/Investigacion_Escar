@@ -6,13 +6,13 @@ use MongoDB\Client;
 
 function create_mongo_client_with_retry(array $opts = [])
 {
-    $uri = getenv('MONGO_URI') ?: '';
+    $uri = $_ENV['MONGO_URI'] ?? getenv('MONGO_URI');
     if (!$uri) {
         throw new InvalidArgumentException('MONGO_URI is required in environment');
     }
 
-    $attempts = isset($opts['retries']) ? (int)$opts['retries'] : ((getenv('MONGO_CONNECT_RETRIES') !== false) ? (int)getenv('MONGO_CONNECT_RETRIES') : 3);
-    $backoffMs = isset($opts['backoff_ms']) ? (int)$opts['backoff_ms'] : ((getenv('MONGO_CONNECT_BACKOFF_MS') !== false) ? (int)getenv('MONGO_CONNECT_BACKOFF_MS') : 500);
+    $attempts = isset($opts['retries']) ? (int) $opts['retries'] : ((getenv('MONGO_CONNECT_RETRIES') !== false) ? (int) getenv('MONGO_CONNECT_RETRIES') : 3);
+    $backoffMs = isset($opts['backoff_ms']) ? (int) $opts['backoff_ms'] : ((getenv('MONGO_CONNECT_BACKOFF_MS') !== false) ? (int) getenv('MONGO_CONNECT_BACKOFF_MS') : 500);
 
     for ($i = 1; $i <= $attempts; $i++) {
         try {
@@ -25,7 +25,7 @@ function create_mongo_client_with_retry(array $opts = [])
             if ($i === $attempts) {
                 throw new RuntimeException("MongoDB connection failed after {$attempts} attempts: " . $e->getMessage());
             }
-            usleep($backoffMs * 1000 * (int)pow(2, $i - 1));
+            usleep($backoffMs * 1000 * (int) pow(2, $i - 1));
         }
     }
 
