@@ -99,23 +99,53 @@
                         <input type="hidden" name="id" id="proyectoId">
                         <input type="hidden" name="existingImagen" id="existingImagen">
 
-                        <div class="mb-3">
-                            <label class="form-label">Título del Proyecto</label>
-                            <input type="text" class="form-control" name="titulo" id="titulo" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Imagen Destacada</label>
-                            <input type="file" class="form-control" name="imagen" id="imagen" accept="image/*">
-                            <div id="previewContainer" class="mt-2 d-none">
-                                <img src="" id="imagenPreview" class="img-thumbnail" style="max-height: 200px;">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Título del Proyecto</label>
+                                <input type="text" class="form-control" name="titulo" id="titulo" required
+                                    placeholder="Ej: Sistema de Monitoreo Ambiental">
                             </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Contenido / Descripción</label>
-                            <textarea class="form-control" name="contenido" id="contenido" rows="6" required></textarea>
-                            <div class="form-text">Puede usar texto plano.</div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold text-primary">Semillero Responsable</label>
+                                <select class="form-select" name="semilleroId" id="semilleroId" required>
+                                    <option value="" selected disabled>Seleccione el semillero ejecutor...</option>
+                                    <!-- Cargado dinámicamente -->
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Imagen de Portada</label>
+                                <input type="file" class="form-control" name="imagen" id="imagen" accept="image/*">
+                                <div id="previewContainer" class="mt-2 d-none">
+                                    <img src="" id="imagenPreview" class="img-thumbnail rounded"
+                                        style="max-height: 150px;">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">URL de Video (YouTube/Vimeo)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-danger"><i
+                                            class="bi bi-youtube"></i></span>
+                                    <input type="url" class="form-control" name="videoUrl" id="videoUrl"
+                                        placeholder="https://www.youtube.com/watch?v=...">
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-primary">Galería de Fotos del Proyecto</label>
+                                <input type="file" class="form-control" id="galeriaInput" multiple accept="image/*">
+                                <div id="galeriaPreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+                                <div class="form-text">Puede seleccionar varias imágenes que muestren la realización del
+                                    proyecto.</div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Contenido / Descripción Detallada</label>
+                                <textarea class="form-control" name="contenido" id="contenido" rows="5" required
+                                    placeholder="Describa los objetivos, metodología y resultados logrados..."></textarea>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -136,12 +166,33 @@
                 <div class="modal-header border-0">
                     <hbutton type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <img src="" id="lecturaImagen" class="w-100 rounded mb-4 shadow"
-                        style="max-height: 400px; object-fit: cover;">
-                    <h2 id="lecturaTitulo" class="fw-bold mb-3"></h2>
-                    <small class="text-muted d-block mb-4" id="lecturaFecha"></small>
-                    <div id="lecturaContenido" class="lead" style="white-space: pre-wrap;"></div>
+                <div class="modal-body p-4">
+                    <img src="" id="lecturaImagen" class="w-100 rounded-4 mb-4 shadow-sm"
+                        style="max-height: 450px; object-fit: cover;">
+
+                    <div class="px-2">
+                        <h1 id="lecturaTitulo" class="fw-bold mb-2 text-dark"></h1>
+                        <p id="lecturaSemillero" class="text-primary fw-bold mb-4"></p>
+
+                        <div id="lecturaContenido" class="text-secondary mb-5"
+                            style="white-space: pre-wrap; font-size: 1.1rem; line-height: 1.6;"></div>
+
+                        <!-- Sección Galería -->
+                        <div id="seccionGaleria" class="mb-5 d-none">
+                            <h5 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-images me-2"></i>Galería del
+                                Proyecto</h5>
+                            <div id="galeriaContenedor" class="row g-3"></div>
+                        </div>
+
+                        <!-- Sección Video -->
+                        <div id="seccionVideo" class="mb-4 d-none">
+                            <h5 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-play-btn me-2"></i>Video del
+                                Proyecto</h5>
+                            <div class="ratio ratio-16x9 rounded-4 overflow-hidden shadow">
+                                <iframe src="" id="lecturaVideo" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
