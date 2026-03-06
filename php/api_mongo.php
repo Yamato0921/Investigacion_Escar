@@ -143,12 +143,13 @@ switch ($action) {
         $data = $_POST;
         unset($data['id'], $data['col']);
 
-        // Handle File Uploads
+        // Handle File Uploads (Using Base64 for persistence in Render)
         foreach ($_FILES as $key => $file) {
             if ($file['size'] > 0) {
-                $path = save_uploaded_file($file, $colParam, ['image/jpeg', 'image/png', 'image/webp']);
-                if ($path)
-                    $data[$key] = $path;
+                // Limit to 2MB and common image types
+                $b64 = get_file_as_base64($file, ['image/jpeg', 'image/png', 'image/webp'], 2097152);
+                if ($b64)
+                    $data[$key] = $b64;
             }
         }
 

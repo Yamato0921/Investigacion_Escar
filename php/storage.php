@@ -16,6 +16,32 @@ function sanitize_filename(string $name): string
     return $name;
 }
 
+// Devolver el contenido del archivo como string Base64 para persistencia en DB (Render fix)
+function get_file_as_base64(array $file, array $allowed_mimes = [], int $max_bytes = 2097152): ?string
+{
+    // default 2MB max for BSON performance
+    if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK)
+        return null;
+
+    if ($file['size'] > $max_bytes)
+        return null;
+
+    if (!empty($allowed_mimes)) {
+        if (file_exists(__DIR__ . '/validators.php')) {
+            require_once __DIR__ . '/validators.php';
+            $res = validate_file_upload($file, $allowed_mimes, $max_bytes);
+            if (!$res['ok'])
+                return null;
+        }
+    }
+
+    $data = file_get_contents($file['tmp_name']);
+    $base64 = base64_encode($data);
+    $mime = mime_content_type($file['tmp_name']);
+
+    return 'data:' . $mime . ';base64,' . $base64;
+}
+
 function save_uploaded_file(array $file, string $subdir = 'files', array $allowed_mimes = [], int $max_bytes = 5242880): ?string
 {
     // allowed_mimes: array of MIME types. max_bytes default 5MB
