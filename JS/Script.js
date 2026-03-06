@@ -33,33 +33,32 @@ function animateValue(id, start, end, duration) {
 const API_URL_STATS = 'php/api_mongo.php';
 
 async function updateStatistics() {
-  try {
-    // 1. Proyectos
-    fetch(`${API_URL_STATS}?action=list&col=proyectos`)
-      .then(res => res.json())
-      .then(data => {
-        const count = data.success && data.data ? data.data.length : 0;
-        animateValue("stats-grupos", 0, count, 2000);
-      });
+  console.log('Script.js: Updating statistics from MongoDB...');
 
-    // 2. Investigadores
-    fetch(`${API_URL_STATS}?action=list&col=investigadores`)
-      .then(res => res.json())
-      .then(data => {
-        const count = data.success && data.data ? data.data.length : 0;
-        animateValue("stats-investigadores", 0, count, 2000);
-      });
+  const categories = [
+    { col: 'proyectos', id: 'stats-grupos', label: 'Proyectos' },
+    { col: 'investigadores', id: 'stats-investigadores', label: 'Investigadores' },
+    { col: 'semilleros', id: 'stats-semilleros', label: 'Semilleros' }
+  ];
 
-    // 3. Semilleros
-    fetch(`${API_URL_STATS}?action=list&col=semilleros`)
-      .then(res => res.json())
-      .then(data => {
-        const count = data.success && data.data ? data.data.length : 0;
-        animateValue("stats-semilleros", 0, count, 2000);
-      });
+  for (const cat of categories) {
+    try {
+      const response = await fetch(`${API_URL_STATS}?action=list&col=${cat.col}`);
+      const data = await response.json();
 
-  } catch (error) {
-    console.error('Error loading stats:', error);
+      console.log(`Stats for ${cat.label}:`, data);
+
+      if (data.success && Array.isArray(data.data)) {
+        const count = data.data.length;
+        animateValue(cat.id, 0, count, 2000);
+      } else {
+        console.warn(`API returned success:false for ${cat.label} or data is not array`);
+        document.getElementById(cat.id).innerText = '0';
+      }
+    } catch (error) {
+      console.error(`Error fetching stats for ${cat.label}:`, error);
+      document.getElementById(cat.id).innerText = '0';
+    }
   }
 }
 
