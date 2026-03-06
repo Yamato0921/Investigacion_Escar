@@ -87,34 +87,68 @@ const SemillerosApp = {
     },
 
     async verDetalle(id) {
-        const s = this.semillerosOriginales.find(item => item.id == id);
+        const s = this.semillerosOriginales.find(item => (item.id == id || item._id == id));
         if (!s) return;
 
-        // Cargar investigadores para mostrar asociados (opcionalmente podrías hacer un fetch)
-        let investigadoresHtml = '<p class="text-muted fst-italic">Cargando investigadores...</p>';
+        // Mostrar cargando en la zona de integrantes
+        let investigadoresHtml = `
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+                <p class="small text-muted mt-2">Cargando integrantes...</p>
+            </div>
+        `;
 
         const modalHtml = `
             <div class="modal fade" id="detalleModal" tabindex="-1">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title">${s.nombre}</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header border-0 pb-0 shadow-sm bg-light">
+                            <h5 class="modal-title fw-bold text-primary p-2">${s.nombre}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body pt-4">
                             <div class="text-center mb-4">
-                                <img src="${s.logo || 'https://via.placeholder.com/120'}" class="rounded-circle shadow mb-3" style="width: 120px; height: 120px; object-fit: cover;">
-                                <h3>${s.nombre}</h3>
+                                <img src="${s.logo || 'https://via.placeholder.com/120'}" class="rounded-circle shadow-sm border border-4 border-white mb-3" style="width: 120px; height: 120px; object-fit: cover; background: white;">
+                                <h2 class="fw-bold text-dark">${s.nombre}</h2>
+                                <p class="text-muted mb-0"><i class="bi bi-person-badge"></i> Responsable: ${s.responsable}</p>
                             </div>
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <ul class="list-group list-group-flush">
-                                        <li class="list-group-item"><strong>Responsable:</strong> ${s.responsable}</li>
-                                        <li class="list-group-item"><strong>Unidad:</strong> ${s.unidadAcademica}</li>
-                                        <li class="list-group-item"><strong>Código:</strong> ${s.codigo}</li>
-                                        <li class="list-group-item"><strong>Acrónimo:</strong> ${s.acronimo || 'N/A'}</li>
-                                        <li class="list-group-item"><strong>Estado:</strong> ${s.estado}</li>
-                                    </ul>
+                            
+                            <div class="px-3">
+                                <div class="mb-4 bg-light p-3 rounded-3 border-start border-4 border-primary">
+                                    <h5 class="fw-bold mb-2 text-primary"><i class="bi bi-info-circle me-2"></i>Sobre el Semillero</h5>
+                                    <p class="text-secondary mb-0" style="white-space: pre-line;">${s.descripcion || 'Sin descripción disponible.'}</p>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-6 col-md-3">
+                                        <div class="p-2 border rounded-3 text-center bg-white shadow-sm">
+                                            <small class="d-block text-muted">Unidad</small>
+                                            <span class="fw-bold small">${s.unidadAcademica || 'ESCAR'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="p-2 border rounded-3 text-center bg-white shadow-sm">
+                                            <small class="d-block text-muted">Código</small>
+                                            <span class="fw-bold small">${s.codigo}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="p-2 border rounded-3 text-center bg-white shadow-sm">
+                                            <small class="d-block text-muted">Estado</small>
+                                            <span class="badge ${s.estado === 'ACTIVO' ? 'bg-success' : 'bg-danger'} d-block mt-1">${s.estado}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="p-2 border rounded-3 text-center bg-white shadow-sm">
+                                            <small class="d-block text-muted">Acrónimo</small>
+                                            <span class="fw-bold small">${s.acronimo || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h5 class="fw-bold border-bottom pb-2 mb-3 text-dark"><i class="bi bi-people-fill me-2"></i>Integrantes Asociados</h5>
+                                <div id="listaIntegrantes" class="row g-3 pb-3">
+                                    ${investigadoresHtml}
                                 </div>
                             </div>
                         </div>
@@ -126,7 +160,42 @@ const SemillerosApp = {
         const oldModal = document.getElementById('detalleModal');
         if (oldModal) oldModal.remove();
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        new bootstrap.Modal(document.getElementById('detalleModal')).show();
+        const modalInstance = new bootstrap.Modal(document.getElementById('detalleModal'));
+        modalInstance.show();
+
+        // Cargar integrantes reales pasados por ID
+        try {
+            const selectedIds = s.investigadoresIds ? (typeof s.investigadoresIds === 'string' ? JSON.parse(s.investigadoresIds) : s.investigadoresIds) : [];
+
+            if (selectedIds.length > 0) {
+                const resp = await fetch('php/api_mongo.php?col=investigadores&action=list');
+                const data = await resp.json();
+                if (data.success) {
+                    const integrantes = data.data.filter(inv => selectedIds.includes(inv.id || inv._id));
+                    const container = document.getElementById('listaIntegrantes');
+                    if (integrantes.length > 0) {
+                        container.innerHTML = integrantes.map(inv => `
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center p-2 border rounded-3 bg-white hover-card shadow-sm" style="transition: transform 0.2s;">
+                                    <img src="${inv.foto || 'https://via.placeholder.com/40'}" class="rounded-circle me-2 border" style="width: 40px; height: 40px; object-fit: cover;">
+                                    <div>
+                                        <p class="mb-0 fw-bold small">${inv.nombre}</p>
+                                        <p class="mb-0 text-muted smaller">${inv.grado || 'Investigador'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = '<div class="col-12"><p class="text-muted fst-italic text-center py-3">No hay investigadores asociados visibles.</p></div>';
+                    }
+                }
+            } else {
+                document.getElementById('listaIntegrantes').innerHTML = '<div class="col-12"><p class="text-muted fst-italic text-center py-3">Sin integrantes asignados.</p></div>';
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('listaIntegrantes').innerHTML = '<div class="col-12"><p class="text-danger small text-center py-3">Error al cargar integrantes.</p></div>';
+        }
     },
 
     async mostrarFormulario(s = null) {
@@ -138,40 +207,81 @@ const SemillerosApp = {
         const todosInvestigadores = dataInv.success ? dataInv.data : [];
 
         let invOptions = '';
+        const selectedIds = s?.investigadoresIds ? (typeof s.investigadoresIds === 'string' ? JSON.parse(s.investigadoresIds) : s.investigadoresIds) : [];
+
         todosInvestigadores.forEach(inv => {
-            const checked = s?.investigadoresIds?.includes(inv.id) ? 'checked' : '';
+            const checked = selectedIds.includes(inv.id || inv._id) ? 'checked' : '';
             invOptions += `
-                <div class="form-check">
-                    <input class="form-check-input inv-cb" type="checkbox" value="${inv.id}" id="inv_${inv.id}" ${checked}>
-                    <label class="form-check-label">${inv.nombre}</label>
+                <div class="col-md-6 mb-2">
+                    <div class="form-check p-2 border rounded-2 bg-white h-100">
+                        <input class="form-check-input inv-cb ms-1" type="checkbox" value="${inv.id || inv._id}" id="inv_${inv.id || inv._id}" ${checked}>
+                        <label class="form-check-label ps-2 small fw-bold d-block" for="inv_${inv.id || inv._id}">
+                            ${inv.nombre}
+                            <span class="d-block smaller text-muted fw-normal">${inv.grado || ''}</span>
+                        </label>
+                    </div>
                 </div>
             `;
         });
 
         const modalHtml = `
             <div class="modal fade" id="semilleroModal" tabindex="-1">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
                         <form id="semilleroForm">
-                            <div class="modal-header">
-                                <h5 class="modal-title">${s ? 'Editar' : 'Nuevo'} Semillero</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <div class="modal-header bg-dark text-white border-0">
+                                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>${s ? 'Actualizar' : 'Registrar'} Semillero</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body row g-3">
-                                <input type="hidden" name="id" value="${s?.id || ''}">
-                                <div class="col-md-12"><label class="form-label">Nombre</label><input type="text" name="nombre" class="form-control" required value="${s?.nombre || ''}"></div>
-                                <div class="col-md-6"><label class="form-label">Responsable</label><input type="text" name="responsable" class="form-control" required value="${s?.responsable || ''}"></div>
-                                <div class="col-md-6"><label class="form-label">Código</label><input type="text" name="codigo" class="form-control" required value="${s?.codigo || ''}"></div>
-                                <div class="col-md-12"><label class="form-label">Unidad Académica</label><input type="text" name="unidadAcademica" class="form-control" value="${s?.unidadAcademica || ''}"></div>
-                                <div class="col-md-6"><label class="form-label">Logo</label><input type="file" name="logo" class="form-control"></div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Estado</label>
-                                    <select name="estado" class="form-select"><option value="ACTIVO" ${s?.estado === 'ACTIVO' ? 'selected' : ''}>Activo</option><option value="INACTIVO" ${s?.estado === 'INACTIVO' ? 'selected' : ''}>Inactivo</option></select>
+                            <div class="modal-body p-4 row g-3">
+                                <input type="hidden" name="id" value="${s?.id || s?._id || ''}">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold">Nombre del Semillero</label>
+                                    <input type="text" name="nombre" class="form-control form-control-lg" required value="${s?.nombre || ''}" placeholder="Ej: Semillero de Seguridad Vial">
                                 </div>
-                                <div class="col-12"><label class="form-label">Investigadores Asociados</label><div class="border p-2" style="max-height:150px; overflow-y:auto;">${invOptions}</div></div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Responsable</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                                        <input type="text" name="responsable" class="form-control" required value="${s?.responsable || ''}" placeholder="Nombre y Grado">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Código de Registro</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="bi bi-upc-scan"></i></span>
+                                        <input type="text" name="codigo" class="form-control" required value="${s?.codigo || ''}" placeholder="Ej: SEM-2024-001">
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold">Unidad Académica</label>
+                                    <input type="text" name="unidadAcademica" class="form-control" value="${s?.unidadAcademica || 'ESCAR'}" placeholder="Ej: Dirección de Carabineros">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold text-primary"><i class="bi bi-info-circle me-1"></i>Descripción del Semillero</label>
+                                    <textarea name="descripcion" class="form-control" rows="4" placeholder="Escriba los objetivos, visión y alcance del semillero...">${s?.descripcion || ''}</textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-primary">Logo / Escudo</label>
+                                    <input type="file" name="logo" class="form-control" accept="image/*">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-primary">Estado Operativo</label>
+                                    <select name="estado" class="form-select">
+                                        <option value="ACTIVO" ${s?.estado === 'ACTIVO' ? 'selected' : ''}>Activo</option>
+                                        <option value="INACTIVO" ${s?.estado === 'INACTIVO' ? 'selected' : ''}>Inactivo</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <label class="form-label fw-bold text-primary border-bottom w-100 pb-2 mb-3"><i class="bi bi-people-fill me-2"></i>Asociar Integrantes</label>
+                                    <div class="row g-2 border rounded-3 p-3 bg-light" style="max-height:250px; overflow-y:auto;">
+                                        ${invOptions || '<div class="col-12 text-center p-3 text-muted">No hay investigadores registrados.</div>'}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-primary">Guardar en Atlas</button>
+                            <div class="modal-footer bg-light border-0 p-4">
+                                <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold">Guardar en Atlas</button>
                             </div>
                         </form>
                     </div>
@@ -201,6 +311,12 @@ const SemillerosApp = {
         const ids = Array.from(document.querySelectorAll('.inv-cb:checked')).map(cb => cb.value);
         formData.append('investigadoresIds', JSON.stringify(ids));
 
+        Swal.fire({
+            title: 'Sincronizando con Atlas...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
         try {
             const token = localStorage.getItem('escar_token');
             const resp = await fetch(`${this.API_URL}&action=${action}`, {
@@ -210,14 +326,14 @@ const SemillerosApp = {
             });
             const data = await resp.json();
             if (data.success) {
-                Swal.fire('¡Éxito!', 'Semillero guardado en Atlas.', 'success');
+                Swal.fire('¡Éxito!', 'Los datos se han guardado permanentemente en MongoDB Atlas.', 'success');
                 this.activeModal.hide();
                 this.cargarSemilleros();
             } else {
-                Swal.fire('Error', data.message, 'error');
+                Swal.fire('Error de Guardado', data.message || 'Error desconocido', 'error');
             }
         } catch (e) {
-            Swal.fire('Error', 'Error de red', 'error');
+            Swal.fire('Error de Conexión', 'No se pudo contactar con el API de Atlas.', 'error');
         }
     },
 
