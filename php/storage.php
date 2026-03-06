@@ -48,6 +48,9 @@ function save_uploaded_file(array $file, string $subdir = 'files', array $allowe
     if (!move_uploaded_file($file['tmp_name'], $target))
         return null;
 
+    // Asegurar que el archivo sea legible para el servidor web (644)
+    @chmod($target, 0644);
+
     // devolver ruta relativa desde php/ para uso en DB
     return 'php/uploads/' . $subdir . '/' . $newName;
 }

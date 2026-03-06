@@ -7,3 +7,10 @@
 <FilesMatch "\.(env|log|sqlite|db)$">
     Require all denied
 </FilesMatch>
+
+# Permitir acceso directo a imágenes en la carpeta de uploads
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+        Require all granted
+    </FilesMatch>
+</IfModule>
