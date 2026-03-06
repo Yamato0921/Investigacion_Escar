@@ -26,6 +26,7 @@ const ProyectosApp = {
                 this.semillerosData = data.data;
                 const select = document.getElementById('semilleroId');
                 if (select) {
+                    select.innerHTML = '<option value="" selected disabled>Seleccione el semillero ejecutor...</option>';
                     this.semillerosData.forEach(s => {
                         const opt = document.createElement('option');
                         opt.value = s.id || s._id;
@@ -190,7 +191,7 @@ const ProyectosApp = {
                     <div class="col-4 col-md-3">
                         <img src="${img}" class="img-fluid rounded shadow-sm hover-zoom" 
                              style="cursor:pointer; height:80px; width:100%; object-fit:cover;"
-                             onclick="window.open('${img}', '_blank')">
+                             onclick="ProyectosApp.abrirLightbox('${img}')">
                     </div>
                 `).join('');
             } else { galSec.classList.add('d-none'); }
@@ -213,6 +214,28 @@ const ProyectosApp = {
         }
 
         new bootstrap.Modal(document.getElementById('lecturaModal')).show();
+    },
+
+    abrirLightbox(imgUrl) {
+        Swal.fire({
+            imageUrl: imgUrl,
+            imageAlt: 'Imagen del Proyecto',
+            showConfirmButton: false,
+            showCloseButton: true,
+            width: 'auto',
+            padding: '0',
+            background: 'transparent',
+            customClass: {
+                popup: 'border-0 shadow-lg',
+                image: 'rounded-4'
+            },
+            showClass: {
+                popup: 'animate__animated animate__zoomIn animate__faster'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__zoomOut animate__faster'
+            }
+        });
     },
 
     editarProyecto(id) {
