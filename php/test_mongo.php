@@ -5,7 +5,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 // Cargar .env local si existe (para CLI)
 if (file_exists(__DIR__ . '/.env') && class_exists('\Dotenv\Dotenv')) {
     try {
-        $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+        $dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
         $dotenv->load();
     } catch (Throwable $e) {
         // continuar; las variables pueden venir del entorno
